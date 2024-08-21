@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de CNPJ</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: #333;
+            position: relative;
+            transition: background 0.3s ease-in-out;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 25px 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 25px;
+            color: #0984e3;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0984e3;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #0984e3;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #074ea8;
+        }
+
+        #resultado {
+            margin-top: 30px;
+            text-align: left;
+            font-size: 16px;
+            line-height: 1.6;
+            display: none;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        #resultado h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        #mensagem-erro {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #json-bruto,
+        #dados-completos {
+            margin-top: 20px;
+            font-size: 14px;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .socios {
+            margin-top: 20px;
+        }
+
+        .socios h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .socios ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .socios li {
+            margin-bottom: 10px;
+        }
+
+        #mostrar-json-btn,
+        #mostrar-dados-completos-btn,
+        #historico-btn,
+        #exportar-historico-btn,
+        #limpar-historico-btn {
+            margin-top: 10px;
+            background-color: #0984e3;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 200px;
+            transition: background-color 0.3s ease;
+            display: none; /* Botão começa invisível */
+        }
+
+        #mostrar-json-btn:hover,
+        #mostrar-dados-completos-btn:hover,
+        #historico-btn:hover,
+        #exportar-historico-btn:hover,
+        #limpar-historico-btn:hover {
+            background-color: #074ea8;
+        }
+
+        /* Estilo para os dados completos */
+        .dados-completos-container {
+            background-color: #f8f8f8;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .dados-completos-container h3 {
+            color: #0984e3;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .dados-completos-container p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        .dados-completos-container strong {
+            color: #333;
+        }
+
+        #historico-container {
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        #historico-container ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #historico-container li {
+            margin-bottom: 10px;
+        }
+
+        /* Estilo do botão "Voltar ao Topo" */
+        #voltar-topo-btn {
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            background-color: #0984e3;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        #voltar-topo-btn:hover {
+            background-color: #074ea8;
+        }
+
+        
+
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            input[type="text"],
+            button {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            #resultado h2 {
+                font-size: 18px;
+            }
+
+            #view-all-results {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+
+            .toggle-detalhado {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Consulta de CNPJ</h1>
+        <form id="cnpjForm">
+            <input type="text" id="cnpj" name="cnpj" placeholder="Digite o CNPJ" required autocomplete="on">
+            <button type="submit">Consultar</button>
+        </form>
+        <div id="mensagem-carregamento" style="display:none;">Carregando...</div>
+        <div id="resultado">
+            <h2>Detalhes da Empresa:</h2>
+            <p id="nome"></p>
+            <p id="fantasia"></p>
+            <p id="situacao"></p>
+            <p id="atividade_principal"></p>
+            <p id="endereco"></p>
+            <p id="telefone"></p>
+            <p id="email"></p>
+            <p id="capital_social"></p>
+            <p id="natureza_juridica"></p>
+            <p id="qualificacao_responsavel"></p>
+            <div class="socios" id="socios">
+                <h3>Sócios:</h3>
+                <ul id="lista-socios"></ul>
+            </div>
+        </div>
+        <div id="mensagem-erro"></div>
+        <button id="mostrar-json-btn" style="display: none;">Mostrar JSON Bruto</button>
+        <div id="json-bruto"></div>
+        <button id="mostrar-dados-completos-btn" style="display: none;">Mostrar Dados Completos</button>
+        <div id="dados-completos"></div>
+        <button id="historico-btn" style="display: none;">Mostrar Histórico</button>
+        <div id="historico-container"></div>
+        <button id="exportar-historico-btn" style="display: none;">Exportar Histórico</button>
+        <button id="limpar-historico-btn" style="display: none;">Limpar Histórico</button>
+    </div>
+
+    <!-- Botão de voltar ao topo -->
+    <button id="voltar-topo-btn">↑</button>
+
+    <!-- Rodapé com menu -->
+   
+    <script>
+        const apiUrlReceitaWS = 'https://www.receitaws.com.br/v1/cnpj/';
+        const apiTokenReceitaWS = 'a34fb7329209366d0df11a7871b62a8c807c38304cf9052b910189ab5c732dba';
+        const apiUrlOpenCNPJ = 'https://opencnpj.com/v1/cnpj/';
+        const historicoConsultas = JSON.parse(localStorage.getItem('historicoConsultas')) || [];
+
+        let apiResults = []; // Variável para armazenar os dados completos de cada API
+
+        // Exibe o botão "Limpar Histórico" se houver algo no histórico
+        if (historicoConsultas.length > 0) {
+            document.getElementById('limpar-historico-btn').style.display = 'block';
+        }
+
+        document.getElementById('cnpjForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const cnpj = document.getElementById('cnpj').value.replace(/\D/g, '');
+
+            if (!validarCNPJ(cnpj)) {
+                alert('Por favor, insira um CNPJ válido.');
+                return;
+            }
+
+            document.getElementById('mensagem-carregamento').style.display = 'block';
+
+            const apis = [
+                `https://brasilapi.com.br/api/cnpj/v1/${cnpj}`,
+                `${apiUrlReceitaWS}${cnpj}?token=${apiTokenReceitaWS}`,
+                `https://publica.cnpj.ws/cnpj/${cnpj}`,
+                `${apiUrlOpenCNPJ}${cnpj}`
+            ];
+
+            apiResults = await Promise.all(apis.map(url => url.includes('receitaws') ? fetchJSONP(url) : fetchFromAPI(url)));
+
+            document.getElementById('mensagem-carregamento').style.display = 'none';
+
+            const mergedData = mergeData(apiResults);
+
+            if (Object.keys(mergedData).length === 0) {
+                document.getElementById('mensagem-erro').textContent = `Erro ao consultar o CNPJ em todas as APIs disponíveis.`;
+                document.getElementById('mensagem-erro').style.display = 'block';
+                return;
+            }
+
+            salvarHistoricoConsulta(cnpj, mergedData);
+            exibirResultado(mergedData);
+            exibirHistorico();
+
+            // Verifica novamente se há histórico para exibir o botão "Limpar Histórico"
+            if (historicoConsultas.length > 0) {
+                document.getElementById('limpar-historico-btn').style.display = 'block';
+            }
+        });
+
+        async function fetchFromAPI(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`Erro na consulta: ${response.status} - ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Erro ao consultar API: ${url}`, error);
+                return null;
+            }
+        }
+
+        function fetchJSONP(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const callbackName = `jsonpCallback_${Math.round(100000 * Math.random())}`;
+
+                window[callbackName] = function (data) {
+                    resolve(data);
+                    document.body.removeChild(script);
+                    delete window[callbackName];
+                };
+
+                script.src = `${url}&callback=${callbackName}`;
+                document.body.appendChild(script);
+            });
+        }
+
+        function mergeData(results) {
+            const mergedData = {};
+
+            for (const result of results) {
+                if (!result) continue;
+
+                mergedData.nome = mergedData.nome || result.razao_social || result.nome || 'Informação não disponível';
+                mergedData.fantasia = mergedData.fantasia || result.fantasia || 'Informação não disponível';
+                mergedData.situacao = mergedData.situacao || result.situacao || 'Informação não disponível';
+                mergedData.atividade_principal = mergedData.atividade_principal ||
+                    (result.atividade_principal ? [{
+                        text: result.atividade_principal[0].text
+                    }] : 'Informação não disponível');
+                mergedData.logradouro = mergedData.logradouro || result.logradouro || 'Informação não disponível';
+                mergedData.numero = mergedData.numero || result.numero || 'S/N';
+                mergedData.bairro = mergedData.bairro || result.bairro || 'Informação não disponível';
+                mergedData.municipio = mergedData.municipio || result.municipio || 'Informação não disponível';
+                mergedData.uf = mergedData.uf || result.uf || 'Informação não disponível';
+                mergedData.cep = mergedData.cep || result.cep || 'Informação não disponível';
+                mergedData.telefone = mergedData.telefone || result.telefone || 'Informação não disponível';
+                mergedData.email = mergedData.email || result.email || 'Informação não disponível';
+                mergedData.capital_social = mergedData.capital_social || result.capital_social || 'Informação não disponível';
+                mergedData.natureza_juridica = mergedData.natureza_juridica || result.natureza_juridica || 'Informação não disponível';
+                mergedData.qualificacao_responsavel = mergedData.qualificacao_responsavel || result.qualificacao_do_responsavel?.descricao || 'Informação não disponível';
+
+                // Prioriza os sócios da API 2
+                if (result.qsa && result.qsa.length > 0) {
+                    mergedData.socios = result.qsa;
+                } else if (!mergedData.socios) {
+                    mergedData.socios = [];
+                }
+            }
+
+            return mergedData;
+        }
+
+        function exibirResultado(mergedData) {
+            document.getElementById('resultado').style.display = 'block';
+            document.getElementById('nome').textContent = `Nome: ${mergedData.nome}`;
+            document.getElementById('fantasia').textContent = `Nome Fantasia: ${mergedData.fantasia}`;
+            document.getElementById('situacao').textContent = `Situação: ${mergedData.situacao}`;
+            document.getElementById('atividade_principal').textContent = mergedData.atividade_principal && mergedData.atividade_principal.length > 0 ?
+                `Atividade Principal: ${mergedData.atividade_principal[0].text}` :
+                'Atividade Principal: Informação não disponível';
+            document.getElementById('endereco').textContent = `Endereço: ${mergedData.logradouro}, ${mergedData.numero} - ${mergedData.bairro}, ${mergedData.municipio} - ${mergedData.uf}, ${mergedData.cep}`;
+            document.getElementById('telefone').textContent = `Telefone: ${mergedData.telefone}`;
+            document.getElementById('email').textContent = `Email: ${mergedData.email}`;
+            document.getElementById('capital_social').textContent = `Capital Social: ${mergedData.capital_social}`;
+            document.getElementById('natureza_juridica').textContent = `Natureza Jurídica: ${mergedData.natureza_juridica}`;
+            document.getElementById('qualificacao_responsavel').textContent = `Qualificação do Responsável: ${mergedData.qualificacao_responsavel}`;
+
+            exibirSocios(mergedData.socios);
+
+            document.getElementById('mensagem-erro').style.display = 'none';
+            document.getElementById('mostrar-json-btn').style.display = 'block';
+            document.getElementById('mostrar-dados-completos-btn').style.display = 'block';
+            document.getElementById('historico-btn').style.display = 'block';
+            document.getElementById('exportar-historico-btn').style.display = 'block';
+            document.getElementById('limpar-historico-btn').style.display = 'block';
+            document.getElementById('json-bruto').style.display = 'none';
+            document.getElementById('json-bruto').textContent = JSON.stringify(mergedData, null, 2);
+            document.getElementById('dados-completos').style.display = 'none';
+            exibirDadosCompletos(apiResults);
+        }
+
+        function exibirSocios(socios) {
+            const listaSocios = document.getElementById('lista-socios');
+            listaSocios.innerHTML = '';
+
+            if (socios.length > 0) {
+                socios.forEach(socio => {
+                    const li = document.createElement('li');
+                    li.textContent = `Nome: ${socio.nome || 'N/A'}, Qualificação: ${socio.qual || 'N/A'}`;
+                    listaSocios.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'Informação não disponível';
+                listaSocios.appendChild(li);
+            }
+        }
+
+        function exibirDadosCompletos(results) {
+            const container = document.getElementById('dados-completos');
+            container.innerHTML = '';
+
+            results.forEach((result, index) => {
+                if (!result) return;
+
+                const apiContainer = document.createElement('div');
+                apiContainer.className = 'dados-completos-container';
+
+                apiContainer.innerHTML = `
+                    <h3>API ${index + 1}</h3>
+                    <p><strong>CNPJ Raiz:</strong> ${result.cnpj_raiz || result.cnpj || 'N/A'}</p>
+                    <p><strong>Razão Social:</strong> ${result.razao_social || result.nome || 'N/A'}</p>
+                    <p><strong>Capital Social:</strong> ${result.capital_social || 'N/A'}</p>
+                    <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
+                    <p><strong>Natureza Jurídica:</strong> ${result.natureza_juridica || 'N/A'}</p>
+                    <p><strong>Qualificação do Responsável:</strong> ${result.qualificacao_do_responsavel?.descricao || 'N/A'}</p>
+                    <p><strong>Simples Nacional:</strong> ${result.simples?.simples || 'N/A'} (MEI: ${result.simples?.mei || 'N/A'})</p>
+                    <p><strong>Atividade Principal:</strong> ${result.atividade_principal?.[0]?.text || 'N/A'}</p>
+                    <p><strong>Endereço:</strong> ${result.logradouro || 'N/A'}, ${result.numero || 'N/A'} - ${result.bairro || 'N/A'}, ${result.municipio || 'N/A'} - ${result.uf || 'N/A'}, ${result.cep || 'N/A'}</p>
+                    <p><strong>Telefone:</strong> ${result.telefone || 'N/A'}</p>
+                    <p><strong>Email:</strong> ${result.email || 'N/A'}</p>
+                    <h4>Sócios</h4>
+                    <ul>
+                        ${result.qsa?.map(socio => `
+                            <li><strong>Nome:</strong> ${socio.nome || 'N/A'}, <strong>Qualificação:</strong> ${socio.qual || 'N/A'}</li>
+                        `).join('') || '<li>Informação não disponível</li>'}
+                    </ul>
+                `;
+
+                container.appendChild(apiContainer);
+            });
+        }
+
+        function salvarHistoricoConsulta(cnpj, data) {
+            historicoConsultas.push({
+                cnpj,
+                data,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('historicoConsultas', JSON.stringify(historicoConsultas));
+        }
+
+        function exibirHistorico() {
+            const container = document.getElementById('historico-container');
+            container.innerHTML = '';
+            container.style.display = 'block';
+
+            historicoConsultas.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong>Consulta ${index + 1}:</strong> ${item.cnpj} - ${new Date(item.timestamp).toLocaleString()}
+                    <button onclick="recuperarConsulta(${index})">Recuperar</button>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        window.recuperarConsulta = function (index) {
+            const consulta = historicoConsultas[index];
+            exibirResultado(consulta.data);
+        }
+
+        function exportarHistorico() {
+            let historicoTexto = 'Histórico de Consultas CNPJ\n\n';
+
+            historicoConsultas.forEach((item, index) => {
+                historicoTexto += `Consulta ${index + 1}:\n`;
+                historicoTexto += `CNPJ: ${item.cnpj}\n`;
+                historicoTexto += `Data e Hora: ${new Date(item.timestamp).toLocaleString()}\n`;
+                historicoTexto += `Dados:\n${JSON.stringify(item.data, null, 2)}\n\n`;
+            });
+
+            const blob = new Blob([historicoTexto], {
+                type: 'text/plain;charset=utf-8;'
+            });
+            const link = document.createElement('a');
+            const now = new Date();
+            const dateTimeString = now.toLocaleString().replace(/[\s,]/g, '_').replace(/[:]/g, '-');
+            const fileName = `historico_consultas_${dateTimeString}.txt`;
+
+            if (navigator.msSaveBlob) {
+                navigator.msSaveBlob(blob, fileName);
+            } else {
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        document.getElementById('limpar-historico-btn').addEventListener('click', function () {
+            if (confirm('Tem certeza que deseja limpar o histórico?')) {
+                localStorage.removeItem('historicoConsultas');
+                historicoConsultas.length = 0;
+                document.getElementById('historico-container').innerHTML = '';
+                document.getElementById('limpar-historico-btn').style.display = 'none';
+            }
+        });
+
+        function validarCNPJ(cnpj) {
+            cnpj = cnpj.replace(/[^\d]+/g, '');
+            if (cnpj == '') return false;
+            if (cnpj.length != 14)
+                return false;
+
+            // Elimina CNPJs inválidos conhecidos
+            if (cnpj == "00000000000000" ||
+                cnpj == "11111111111111" ||
+                cnpj == "22222222222222" ||
+                cnpj == "33333333333333" ||
+                cnpj == "44444444444444" ||
+                cnpj == "55555555555555" ||
+                cnpj == "66666666666666" ||
+                cnpj == "77777777777777" ||
+                cnpj == "88888888888888" ||
+                cnpj == "99999999999999")
+                return false;
+
+            // Valida DVs
+            let tamanho = cnpj.length - 2
+            let numeros = cnpj.substring(0, tamanho);
+            let digitos = cnpj.substring(tamanho);
+            let soma = 0;
+            let pos = tamanho - 7;
+            for (let i = tamanho; i >= 1; i--) {
+                soma += numeros.charAt(tamanho - i) * pos--;
+                if (pos < 2)
+                    pos = 9;
+            }
+            let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            if (resultado != digitos.charAt(0))
+                return false;
+
+            tamanho = tamanho + 1;
+            numeros = cnpj.substring(0, tamanho);
+            soma = 0;
+            pos = tamanho - 7;
+            for (let i = tamanho; i >= 1; i--) {
+                soma += numeros.charAt(tamanho - i) * pos--;
+                if (pos < 2)
+                    pos = 9;
+            }
+            resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+            if (resultado != digitos.charAt(1))
+                return false;
+
+            return true;
+        }
+
+        document.getElementById('mostrar-json-btn').addEventListener('click', function () {
+            const jsonContainer = document.getElementById('json-bruto');
+            if (jsonContainer.style.display === 'none') {
+                jsonContainer.style.display = 'block';
+            } else {
+                jsonContainer.style.display = 'none';
+            }
+        });
+
+        document.getElementById('mostrar-dados-completos-btn').addEventListener('click', function () {
+            const dadosContainer = document.getElementById('dados-completos');
+            if (dadosContainer.style.display === 'none') {
+                dadosContainer.style.display = 'block';
+            } else {
+                dadosContainer.style.display = 'none';
+            }
+        });
+
+        document.getElementById('historico-btn').addEventListener('click', function () {
+            const historicoContainer = document.getElementById('historico-container');
+            if (historicoContainer.style.display === 'none') {
+                historicoContainer.style.display = 'block';
+            } else {
+                historicoContainer.style.display = 'none';
+            }
+        });
+
+        document.getElementById('exportar-historico-btn').addEventListener('click', function () {
+            exportarHistorico();
+        });
+
+        // Exibe histórico ao carregar a página
+        exibirHistorico();
+
+        // Função para exibir o botão "Voltar ao Topo" ao rolar a página
+        window.onscroll = function () {
+            const voltarTopoBtn = document.getElementById('voltar-topo-btn');
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                voltarTopoBtn.style.display = 'block';
+            } else {
+                voltarTopoBtn.style.display = 'none';
+            }
+        };
+
+        // Função para rolar a página de volta ao topo
+        document.getElementById('voltar-topo-btn').addEventListener('click', function () {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+        });
+    </script>
+</body>
+
+</html>

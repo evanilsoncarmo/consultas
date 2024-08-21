@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Endereço pelo CEP</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: #333;
+            position: relative;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 25px 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            width: 320px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 25px;
+            color: #0984e3;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0984e3;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #0984e3;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #074ea8;
+        }
+
+        #resultado {
+            margin-top: 30px;
+            text-align: left;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        #resultado h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        #detalhes {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #detalhes h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .detalhe-api {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .detalhe-api h4 {
+            margin: 0;
+            margin-bottom: 5px;
+            color: #0984e3;
+        }
+
+        .detalhe-api pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+
+        #view-all-results {
+            display: none;
+            background-color: #27ae60;
+            color: white;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        #view-all-results:hover {
+            background-color: #219150;
+        }
+
+        #alerta-apis {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        #mensagem-erro {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .toggle-detalhado {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            z-index: 1000;
+            background-color: #0984e3;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .toggle-detalhado:hover {
+            background-color: #074ea8;
+        }
+
+        /* Estilos para a tela de carregamento */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+       
+
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            input[type="text"], button {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            #resultado h2 {
+                font-size: 18px;
+            }
+
+            #view-all-results {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+
+            .toggle-detalhado {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toggle-detalhado" id="toggleDetalhado">#EXIBIR RESULTADOS COMPLETOS#</div>
+    
+    <div class="container">
+        <h1>Buscar Endereço pelo CEP</h1>
+        <form id="cepForm">
+            <input type="text" id="cep" name="cep" placeholder="00000-000" required>
+            <button type="submit">Buscar</button>
+        </form>
+        <div id="resultado">
+            <h2>Endereço:</h2>
+            <p id="logradouro"></p>
+            <p id="bairro"></p>
+            <p id="cidade"></p>
+            <p id="estado"></p>
+            <div id="alerta-apis"></div>
+            <div id="view-all-results">Exibir Todos Resultados</div>
+            <div id="mensagem-erro"></div>
+        </div>
+        <div id="detalhes">
+            <h3>Detalhes das APIs:</h3>
+            <div id="detalhe-viacep" class="detalhe-api">
+                <h4>ViaCEP:</h4>
+                <pre id="resultado-viacep"></pre>
+            </div>
+            <div id="detalhe-apicep" class="detalhe-api">
+                <h4>APICEP:</h4>
+                <pre id="resultado-apicep"></pre>
+            </div>
+            <div id="detalhe-brasilapi" class="detalhe-api">
+                <h4>BrasilAPI:</h4>
+                <pre id="resultado-brasilapi"></pre>
+            </div>
+            <div id="detalhe-postmon" class="detalhe-api">
+                <h4>Postmon:</h4>
+                <pre id="resultado-postmon"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de carregamento -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Rodapé com menu -->
+  
+
+    <script>
+        let mostrarDetalhesAutomaticamente = false;
+
+        function limparResultado() {
+            document.getElementById('logradouro').textContent = '';
+            document.getElementById('bairro').textContent = '';
+            document.getElementById('cidade').textContent = '';
+            document.getElementById('estado').textContent = '';
+            document.getElementById('alerta-apis').textContent = '';
+            document.getElementById('mensagem-erro').style.display = 'none';
+            document.getElementById('resultado-viacep').textContent = '';
+            document.getElementById('resultado-apicep').textContent = '';
+            document.getElementById('resultado-brasilapi').textContent = '';
+            document.getElementById('resultado-postmon').textContent = '';
+            document.getElementById('detalhes').style.display = 'none';
+            document.getElementById('view-all-results').style.display = 'none';
+        }
+
+        async function fetchEnderecoFromAPIs(cep) {
+            // Limpa os resultados anteriores
+            limparResultado();
+
+            // Mostra a tela de carregamento
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            const apis = [
+                {
+                    name: 'ViaCEP',
+                    url: `https://viacep.com.br/ws/${cep}/json/`,
+                    resultElement: document.getElementById('resultado-viacep')
+                },
+                {
+                    name: 'APICEP',
+                    url: `https://ws.apicep.com/cep/${cep}.json`,
+                    resultElement: document.getElementById('resultado-apicep')
+                },
+                {
+                    name: 'BrasilAPI',
+                    url: `https://brasilapi.com.br/api/cep/v1/${cep}`,
+                    resultElement: document.getElementById('resultado-brasilapi')
+                },
+                {
+                    name: 'Postmon',
+                    url: `https://api.postmon.com.br/v1/cep/${cep}`,
+                    resultElement: document.getElementById('resultado-postmon')
+                }
+            ];
+
+            let mainData = null;
+            let apisEncontradas = [];
+            let firstValidApi = null;
+
+            document.getElementById('mensagem-erro').style.display = 'none';
+            document.getElementById('view-all-results').style.display = 'none';
+            document.getElementById('alerta-apis').textContent = '';
+            document.getElementById('detalhes').style.display = 'none';
+
+            for (let api of apis) {
+                try {
+                    const response = await fetch(api.url);
+                    if (!response.ok) throw new Error(`Erro ${response.status}`);
+
+                    const data = await response.json();
+
+                    if (data.erro) {
+                        api.resultElement.textContent = `CEP não encontrado na API ${api.name}.`;
+                        continue;
+                    }
+
+                    api.resultElement.textContent = JSON.stringify(data, null, 2);
+                    apisEncontradas.push(api.name);
+
+                    if (!mainData || !firstValidApi) {
+                        mainData = data;
+                        firstValidApi = api.name;
+                    }
+                } catch (error) {
+                    api.resultElement.textContent = `Erro ao consultar ${api.name}: ${error.message}`;
+                }
+            }
+
+            if (mainData) {
+                document.getElementById('logradouro').textContent = `Logradouro: ${mainData.logradouro || mainData.street || 'N/A'}`;
+                document.getElementById('bairro').textContent = `Bairro: ${mainData.bairro || mainData.neighborhood || 'N/A'}`;
+                document.getElementById('cidade').textContent = `Cidade: ${mainData.localidade || mainData.city || 'N/A'}`;
+                document.getElementById('estado').textContent = `Estado: ${mainData.uf || mainData.state || 'N/A'}`;
+
+                if (apisEncontradas.length > 1) {
+                    document.getElementById('view-all-results').style.display = 'block';
+                    document.getElementById('alerta-apis').textContent = `Este CEP foi encontrado nas seguintes APIs: ${apisEncontradas.join(', ')}`;
+                }
+
+                if (mostrarDetalhesAutomaticamente) {
+                    document.getElementById('detalhes').style.display = 'block';
+                }
+            } else {
+                document.getElementById('mensagem-erro').textContent = `CEP não localizado em nenhuma das APIs.`;
+                document.getElementById('mensagem-erro').style.display = 'block';
+                document.getElementById('detalhes').style.display = 'block';
+            }
+
+            // Esconde a tela de carregamento
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        document.getElementById('cepForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            if (cep.length !== 8) {
+                alert('Por favor, insira um CEP válido.');
+                return;
+            }
+
+            try {
+                await fetchEnderecoFromAPIs(cep);
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        });
+
+        document.getElementById('view-all-results').addEventListener('click', function() {
+            mostrarDetalhesAutomaticamente = true;
+            document.getElementById('detalhes').style.display = 'block';
+            document.getElementById('view-all-results').style.display = 'none';
+        });
+
+        document.getElementById('toggleDetalhado').addEventListener('click', function() {
+            mostrarDetalhesAutomaticamente = true;
+            document.getElementById('detalhes').style.display = 'block';
+            document.getElementById('view-all-results').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
