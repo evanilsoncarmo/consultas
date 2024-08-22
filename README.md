@@ -1,2 +1,1 @@
-# consultas
-Fazer consultas de CEPs e CNPJ 
+Este projeto oferece uma solução robusta para consulta de CEPs e CNPJs utilizando múltiplas APIs abertas, garantindo redundância nas consultas para maior confiabilidade e precisão dos dados. Desenvolvido com HTML, JavaScript e CSS, a aplicação permite que os usuários façam consultas detalhadas e obtenham informações abrangentes de empresas e endereços.
