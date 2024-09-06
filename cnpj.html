@@ -309,9 +309,28 @@
 
     <!-- Rodapé com menu -->
    
+
+
+
+    <script>
+        // Carregar o token de configuração
+        let apiTokenReceitaWS;
+    
+        fetch('config.js')
+          .then(response => response.text())
+          .then(scriptContent => {
+            eval(scriptContent);  // Executa o conteúdo do arquivo de configuração
+            apiTokenReceitaWS = config.apiTokenReceitaWS;
+    
+            console.log('Token carregado:', apiTokenReceitaWS);
+    
+            // Continue com o restante do código que usa o token...
+          })
+          .catch(error => console.error('Erro ao carregar o token:', error));
+    </script>
     <script>
         const apiUrlReceitaWS = 'https://www.receitaws.com.br/v1/cnpj/';
-        const apiTokenReceitaWS = 'a34fb7329209366d0df11a7871b62a8c807c38304cf9052b910189ab5c732dba';
+      
         const apiUrlOpenCNPJ = 'https://opencnpj.com/v1/cnpj/';
         const historicoConsultas = JSON.parse(localStorage.getItem('historicoConsultas')) || [];
 
