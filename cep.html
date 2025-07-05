@@ -3,8 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar Endereço pelo CEP</title>
+    <title>Buscar Endereço pelo CEP - Versão Aprimorada</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        :root {
+            --primary-color: #0984e3;
+            --primary-hover: #074ea8;
+            --secondary-color: #74b9ff;
+            --success-color: #27ae60;
+            --success-hover: #219150;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-gray: #f0f0f0;
+            --dark-gray: #333;
+            --white: #fff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Modo Alto Contraste */
+        .high-contrast {
+            --primary-color: #000;
+            --primary-hover: #333;
+            --secondary-color: #000;
+            --success-color: #000;
+            --success-hover: #333;
+            --danger-color: #000;
+            --warning-color: #000;
+            --light-gray: #fff;
+            --dark-gray: #000;
+            --white: #fff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        }
+
+        .high-contrast body {
+            background: #fff !important;
+            color: #000 !important;
+        }
+
+        .high-contrast .container {
+            background-color: #fff !important;
+            border: 3px solid #000 !important;
+            color: #000 !important;
+        }
+
+        .high-contrast input, .high-contrast button {
+            border: 2px solid #000 !important;
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+
+        .high-contrast button {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+
         body {
             font-family: 'Roboto', sans-serif;
             margin: 0;
@@ -12,18 +64,45 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-            color: #333;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: var(--dark-gray);
             position: relative;
         }
 
+        .accessibility-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            display: flex;
+            gap: 10px;
+        }
+
+        .accessibility-btn {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .accessibility-btn:hover,
+        .accessibility-btn:focus {
+            background: var(--primary-hover);
+            outline: 2px solid var(--warning-color);
+        }
+
         .container {
-            background-color: #fff;
+            background-color: var(--white);
             padding: 25px 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--shadow);
             border-radius: 10px;
-            width: 320px;
+            width: 90%;
+            max-width: 600px;
             text-align: center;
             transition: transform 0.3s ease;
         }
@@ -31,45 +110,123 @@
         h1 {
             font-size: 26px;
             margin-bottom: 25px;
-            color: #0984e3;
+            color: var(--primary-color);
         }
 
-        form {
+        .form-group {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
         }
 
         input[type="text"] {
             padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
+            border: 2px solid #ccc;
             border-radius: 5px;
             width: 100%;
             box-sizing: border-box;
             font-size: 16px;
-            transition: border 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         input[type="text"]:focus {
-            border-color: #0984e3;
+            border-color: var(--primary-color);
             outline: none;
+            box-shadow: 0 0 0 2px rgba(9, 132, 227, 0.2);
+        }
+
+        .input-feedback {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: var(--success-color);
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         button {
             padding: 12px 20px;
             border: none;
             border-radius: 5px;
-            background-color: #0984e3;
-            color: white;
+            background-color: var(--primary-color);
+            color: var(--white);
             font-size: 16px;
             cursor: pointer;
-            width: 100%;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        button:hover,
+        button:focus {
+            background-color: var(--primary-hover);
+            outline: 2px solid var(--warning-color);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .copy-btn {
+            background-color: var(--success-color);
+            font-size: 14px;
+            padding: 8px 16px;
+            min-width: auto;
+        }
+
+        .copy-btn:hover,
+        .copy-btn:focus {
+            background-color: var(--success-hover);
+        }
+
+        .history-section {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background-color: var(--light-gray);
+            border-radius: 5px;
+            cursor: pointer;
             transition: background-color 0.3s ease;
         }
 
-        button:hover {
-            background-color: #074ea8;
+        .history-item:hover,
+        .history-item:focus {
+            background-color: #e0e0e0;
+            outline: 2px solid var(--primary-color);
+        }
+
+        .history-item button {
+            background: var(--danger-color);
+            color: var(--white);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            min-width: auto;
         }
 
         #resultado {
@@ -79,14 +236,31 @@
             line-height: 1.6;
         }
 
-        p {
-            margin: 5px 0;
+        .resultado-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
-        #resultado h2 {
-            color: #333;
-            font-size: 20px;
-            margin-bottom: 10px;
+        .resultado-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .resultado-item:last-child {
+            border-bottom: none;
+        }
+
+        #map {
+            height: 300px;
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 10px;
+            display: none;
         }
 
         #detalhes {
@@ -97,13 +271,8 @@
             overflow-y: auto;
         }
 
-        #detalhes h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
         .detalhe-api {
-            background-color: #f0f0f0;
+            background-color: var(--light-gray);
             padding: 10px;
             border-radius: 5px;
             margin-bottom: 10px;
@@ -111,9 +280,8 @@
         }
 
         .detalhe-api h4 {
-            margin: 0;
-            margin-bottom: 5px;
-            color: #0984e3;
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
         }
 
         .detalhe-api pre {
@@ -126,55 +294,6 @@
             font-size: 12px;
         }
 
-        #view-all-results {
-            display: none;
-            background-color: #27ae60;
-            color: white;
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-            transition: background-color 0.3s ease;
-        }
-
-        #view-all-results:hover {
-            background-color: #219150;
-        }
-
-        #alerta-apis {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        #mensagem-erro {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .toggle-detalhado {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 18px;
-            font-weight: bold;
-            color: #fff;
-            cursor: pointer;
-            z-index: 1000;
-            background-color: #0984e3;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-
-        .toggle-detalhado:hover {
-            background-color: #074ea8;
-        }
-
-        /* Estilos para a tela de carregamento */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -190,7 +309,7 @@
 
         .loading-overlay .spinner {
             border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
+            border-top: 8px solid var(--primary-color);
             border-radius: 50%;
             width: 60px;
             height: 60px;
@@ -202,58 +321,188 @@
             100% { transform: rotate(360deg); }
         }
 
-       
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success-color);
+            color: var(--white);
+            padding: 12px 20px;
+            border-radius: 5px;
+            z-index: 1002;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
 
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Melhorias de Acessibilidade */
+        *:focus {
+            outline: 2px solid var(--warning-color);
+            outline-offset: 2px;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px;
+            text-decoration: none;
+            z-index: 1003;
+            border-radius: 4px;
+        }
+
+        .skip-link:focus {
+            top: 6px;
+        }
+
+        /* Responsividade */
         @media (max-width: 768px) {
             .container {
-                width: 90%;
+                width: 95%;
                 padding: 20px;
             }
 
-            h1 {
-                font-size: 24px;
+            .buttons-container {
+                flex-direction: column;
+                align-items: center;
             }
 
-            input[type="text"], button {
-                font-size: 14px;
-                padding: 10px;
+            button {
+                width: 100%;
+                max-width: 300px;
             }
 
-            #resultado h2 {
-                font-size: 18px;
+            .accessibility-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                justify-content: center;
+                margin-bottom: 20px;
             }
 
-            #view-all-results {
-                font-size: 14px;
-                padding: 10px 20px;
+            .resultado-header {
+                flex-direction: column;
+                gap: 10px;
             }
 
-            .toggle-detalhado {
-                font-size: 16px;
+            .resultado-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="toggle-detalhado" id="toggleDetalhado">#EXIBIR RESULTADOS COMPLETOS#</div>
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
     
-    <div class="container">
+    <div class="accessibility-controls">
+        <button class="accessibility-btn" id="toggleContrast" aria-label="Alternar modo de alto contraste">
+            Alto Contraste
+        </button>
+        <button class="accessibility-btn" id="increaseFontSize" aria-label="Aumentar tamanho da fonte">
+            A+
+        </button>
+        <button class="accessibility-btn" id="decreaseFontSize" aria-label="Diminuir tamanho da fonte">
+            A-
+        </button>
+    </div>
+
+    <div class="container" id="main-content">
         <h1>Buscar Endereço pelo CEP</h1>
-        <form id="cepForm">
-            <input type="text" id="cep" name="cep" placeholder="00000-000" required>
-            <button type="submit">Buscar</button>
+        
+        <form id="cepForm" role="form" aria-label="Formulário de busca de CEP">
+            <div class="form-group">
+                <div class="input-wrapper">
+                    <label for="cep" class="sr-only">Digite o CEP</label>
+                    <input 
+                        type="text" 
+                        id="cep" 
+                        name="cep" 
+                        placeholder="00000-000" 
+                        maxlength="9"
+                        aria-describedby="cep-help"
+                        aria-required="true"
+                        autocomplete="postal-code"
+                        required
+                    >
+                    <div class="input-feedback" id="cep-feedback" aria-live="polite"></div>
+                </div>
+                <div id="cep-help" class="sr-only">Digite um CEP válido no formato 00000-000</div>
+                
+                <div class="buttons-container">
+                    <button type="submit" aria-describedby="buscar-help">
+                        Buscar Endereço
+                    </button>
+                    <button type="button" id="clearHistory" aria-label="Limpar histórico de buscas">
+                        Limpar Histórico
+                    </button>
+                </div>
+                <div id="buscar-help" class="sr-only">Clique para buscar o endereço do CEP informado</div>
+            </div>
         </form>
-        <div id="resultado">
-            <h2>Endereço:</h2>
-            <p id="logradouro"></p>
-            <p id="bairro"></p>
-            <p id="cidade"></p>
-            <p id="estado"></p>
-            <div id="alerta-apis"></div>
-            <div id="view-all-results">Exibir Todos Resultados</div>
-            <div id="mensagem-erro"></div>
+
+        <div class="history-section" id="historySection" style="display: none;">
+            <h3>Histórico de Buscas</h3>
+            <div id="historyList" role="list" aria-label="Lista de CEPs buscados anteriormente"></div>
         </div>
-        <div id="detalhes">
+
+        <div id="resultado" role="region" aria-label="Resultado da busca" aria-live="polite">
+            <div class="resultado-header" style="display: none;">
+                <h2>Endereço Encontrado:</h2>
+                <button class="copy-btn" id="copyResult" aria-label="Copiar endereço completo">
+                    📋 Copiar
+                </button>
+            </div>
+            
+            <div class="resultado-item" id="logradouro-item" style="display: none;">
+                <span id="logradouro"></span>
+                <button class="copy-btn" onclick="copyToClipboard('logradouro')" aria-label="Copiar logradouro">📋</button>
+            </div>
+            
+            <div class="resultado-item" id="bairro-item" style="display: none;">
+                <span id="bairro"></span>
+                <button class="copy-btn" onclick="copyToClipboard('bairro')" aria-label="Copiar bairro">📋</button>
+            </div>
+            
+            <div class="resultado-item" id="cidade-item" style="display: none;">
+                <span id="cidade"></span>
+                <button class="copy-btn" onclick="copyToClipboard('cidade')" aria-label="Copiar cidade">📋</button>
+            </div>
+            
+            <div class="resultado-item" id="estado-item" style="display: none;">
+                <span id="estado"></span>
+                <button class="copy-btn" onclick="copyToClipboard('estado')" aria-label="Copiar estado">📋</button>
+            </div>
+
+            <div id="map" aria-label="Mapa com a localização do endereço"></div>
+            
+            <div id="alerta-apis" role="status" aria-live="polite"></div>
+            <div id="view-all-results" tabindex="0" role="button" aria-label="Exibir todos os resultados das APIs" onkeydown="handleKeyPress(event, 'view-all-results')">
+                Exibir Todos Resultados
+            </div>
+            <div id="mensagem-erro" role="alert" aria-live="assertive"></div>
+        </div>
+
+        <div id="detalhes" role="region" aria-label="Detalhes das consultas às APIs">
             <h3>Detalhes das APIs:</h3>
             <div id="detalhe-viacep" class="detalhe-api">
                 <h4>ViaCEP:</h4>
@@ -274,17 +523,470 @@
         </div>
     </div>
 
-    <!-- Tela de carregamento -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
+    <div class="loading-overlay" id="loadingOverlay" role="dialog" aria-label="Carregando resultados">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="sr-only">Buscando endereço, por favor aguarde...</div>
     </div>
 
-    <!-- Rodapé com menu -->
-  
+    <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Variáveis globais
         let mostrarDetalhesAutomaticamente = false;
+        let searchDebounceTimer;
+        let cepCache = {};
+        let currentMap = null;
+        let searchHistory = JSON.parse(localStorage.getItem('cepHistory') || '[]');
+        let currentFontSize = 16;
 
+        // APIs com prioridade otimizada
+        const apis = [
+            {
+                name: 'ViaCEP',
+                url: (cep) => `https://viacep.com.br/ws/${cep}/json/`,
+                priority: 1,
+                resultElement: () => document.getElementById('resultado-viacep')
+            },
+            {
+                name: 'BrasilAPI',
+                url: (cep) => `https://brasilapi.com.br/api/cep/v1/${cep}`,
+                priority: 2,
+                resultElement: () => document.getElementById('resultado-brasilapi')
+            },
+            {
+                name: 'APICEP',
+                url: (cep) => `https://ws.apicep.com/cep/${cep}.json`,
+                priority: 3,
+                resultElement: () => document.getElementById('resultado-apicep')
+            },
+            {
+                name: 'Postmon',
+                url: (cep) => `https://api.postmon.com.br/v1/cep/${cep}`,
+                priority: 4,
+                resultElement: () => document.getElementById('resultado-postmon')
+            }
+        ];
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSearchHistory();
+            setupEventListeners();
+            loadAccessibilitySettings();
+        });
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Formatação automática do CEP
+            document.getElementById('cep').addEventListener('input', handleCepInput);
+            document.getElementById('cep').addEventListener('keydown', handleCepKeydown);
+            
+            // Formulário
+            document.getElementById('cepForm').addEventListener('submit', handleFormSubmit);
+            
+            // Botões
+            document.getElementById('copyResult').addEventListener('click', copyFullResult);
+            document.getElementById('clearHistory').addEventListener('click', clearSearchHistory);
+            document.getElementById('view-all-results').addEventListener('click', showAllResults);
+            
+            // Acessibilidade
+            document.getElementById('toggleContrast').addEventListener('click', toggleHighContrast);
+            document.getElementById('increaseFontSize').addEventListener('click', () => changeFontSize(2));
+            document.getElementById('decreaseFontSize').addEventListener('click', () => changeFontSize(-2));
+            
+            // Navegação por teclado
+            document.addEventListener('keydown', handleGlobalKeyDown);
+        }
+
+        // Formatação automática do CEP
+        function handleCepInput(event) {
+            let value = event.target.value.replace(/\D/g, '');
+            
+            if (value.length <= 8) {
+                if (value.length > 5) {
+                    value = value.substring(0, 5) + '-' + value.substring(5);
+                }
+                event.target.value = value;
+                
+                // Feedback visual
+                const feedback = document.getElementById('cep-feedback');
+                if (value.replace(/\D/g, '').length === 8) {
+                    feedback.textContent = '✓';
+                    feedback.style.color = 'var(--success-color)';
+                } else {
+                    feedback.textContent = '';
+                }
+            }
+        }
+
+        function handleCepKeydown(event) {
+            // Permite apenas números, backspace, delete, tab, enter, home, end, setas
+            const allowedKeys = [
+                'Backspace', 'Delete', 'Tab', 'Enter', 'Home', 'End',
+                'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
+            ];
+            
+            if (!allowedKeys.includes(event.key) && !/[0-9]/.test(event.key)) {
+                event.preventDefault();
+            }
+        }
+
+        // Debounce para busca
+        function debounce(func, wait) {
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(searchDebounceTimer);
+                    func(...args);
+                };
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(later, wait);
+            };
+        }
+
+        // Cache de CEPs
+        function getCacheKey(cep) {
+            return `cep_${cep}`;
+        }
+
+        function getCachedResult(cep) {
+            const cacheKey = getCacheKey(cep);
+            const cached = cepCache[cacheKey];
+            
+            if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) { // 24 horas
+                return cached.data;
+            }
+            
+            return null;
+        }
+
+        function setCachedResult(cep, data) {
+            const cacheKey = getCacheKey(cep);
+            cepCache[cacheKey] = {
+                data: data,
+                timestamp: Date.now()
+            };
+        }
+
+        // Histórico de buscas
+        function addToHistory(cep, address) {
+            const historyItem = {
+                cep: cep,
+                address: address,
+                timestamp: Date.now()
+            };
+            
+            // Remove duplicatas
+            searchHistory = searchHistory.filter(item => item.cep !== cep);
+            
+            // Adiciona no início
+            searchHistory.unshift(historyItem);
+            
+            // Limita a 10 itens
+            if (searchHistory.length > 10) {
+                searchHistory = searchHistory.slice(0, 10);
+            }
+            
+            localStorage.setItem('cepHistory', JSON.stringify(searchHistory));
+            loadSearchHistory();
+        }
+
+        function loadSearchHistory() {
+            const historyList = document.getElementById('historyList');
+            const historySection = document.getElementById('historySection');
+            
+            if (searchHistory.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            
+            historySection.style.display = 'block';
+            historyList.innerHTML = '';
+            
+            searchHistory.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.setAttribute('role', 'listitem');
+                historyItem.setAttribute('tabindex', '0');
+                historyItem.setAttribute('aria-label', `CEP ${item.cep} - ${item.address}`);
+                
+                historyItem.innerHTML = `
+                    <span onclick="loadFromHistory('${item.cep}')" onkeydown="handleKeyPress(event, 'loadFromHistory', '${item.cep}')">
+                        <strong>${item.cep}</strong> - ${item.address}
+                    </span>
+                    <button onclick="removeFromHistory(${index})" aria-label="Remover do histórico">❌</button>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        function loadFromHistory(cep) {
+            document.getElementById('cep').value = cep;
+            const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
+            debouncedSearch(cep.replace(/\D/g, ''));
+        }
+
+        function removeFromHistory(index) {
+            searchHistory.splice(index, 1);
+            localStorage.setItem('cepHistory', JSON.stringify(searchHistory));
+            loadSearchHistory();
+            showToast('Item removido do histórico');
+        }
+
+        function clearSearchHistory() {
+            searchHistory = [];
+            localStorage.removeItem('cepHistory');
+            loadSearchHistory();
+            showToast('Histórico limpo com sucesso');
+        }
+
+        // Função principal de busca
+        async function fetchEnderecoFromAPIs(cep) {
+            limparResultado();
+            
+            // Verifica cache primeiro
+            const cachedResult = getCachedResult(cep);
+            if (cachedResult) {
+                displayResult(cachedResult);
+                showToast('Resultado carregado do cache');
+                return;
+            }
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Ordena APIs por prioridade
+            const sortedApis = [...apis].sort((a, b) => a.priority - b.priority);
+            
+            let mainData = null;
+            let apisEncontradas = [];
+            let firstValidApi = null;
+            
+            // Tenta APIs em ordem de prioridade
+            for (let api of sortedApis) {
+                try {
+                    const response = await fetch(api.url(cep));
+                    if (!response.ok) throw new Error(`Erro ${response.status}`);
+                    
+                    const data = await response.json();
+                    
+                    if (data.erro) {
+                        api.resultElement().textContent = `CEP não encontrado na API ${api.name}.`;
+                        continue;
+                    }
+                    
+                    api.resultElement().textContent = JSON.stringify(data, null, 2);
+                    apisEncontradas.push(api.name);
+                    
+                    if (!mainData) {
+                        mainData = data;
+                        firstValidApi = api.name;
+                        
+                        // Se encontrou na primeira API (maior prioridade), pode parar
+                        if (api.priority === 1) {
+                            break;
+                        }
+                    }
+                } catch (error) {
+                    api.resultElement().textContent = `Erro ao consultar ${api.name}: ${error.message}`;
+                }
+            }
+            
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            if (mainData) {
+                displayResult(mainData, apisEncontradas);
+                setCachedResult(cep, { mainData, apisEncontradas });
+                
+                const addressString = `${mainData.logradouro || mainData.street || ''}, ${mainData.bairro || mainData.neighborhood || ''}, ${mainData.localidade || mainData.city || ''}`;
+                addToHistory(cep, addressString);
+                
+                showToast('Endereço encontrado com sucesso!');
+            } else {
+                document.getElementById('mensagem-erro').textContent = 'CEP não localizado em nenhuma das APIs.';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                document.getElementById('detalhes').style.display = 'block';
+                showToast('CEP não encontrado', 'error');
+            }
+        }
+
+        function displayResult(data, apisEncontradas = []) {
+            const mainData = data.mainData || data;
+            const apis = data.apisEncontradas || apisEncontradas;
+            
+            document.getElementById('logradouro').textContent = `Logradouro: ${mainData.logradouro || mainData.street || 'N/A'}`;
+            document.getElementById('bairro').textContent = `Bairro: ${mainData.bairro || mainData.neighborhood || 'N/A'}`;
+            document.getElementById('cidade').textContent = `Cidade: ${mainData.localidade || mainData.city || 'N/A'}`;
+            document.getElementById('estado').textContent = `Estado: ${mainData.uf || mainData.state || 'N/A'}`;
+            
+            // Mostra elementos do resultado
+            document.querySelector('.resultado-header').style.display = 'flex';
+            document.getElementById('logradouro-item').style.display = 'flex';
+            document.getElementById('bairro-item').style.display = 'flex';
+            document.getElementById('cidade-item').style.display = 'flex';
+            document.getElementById('estado-item').style.display = 'flex';
+            
+            if (apis.length > 1) {
+                document.getElementById('view-all-results').style.display = 'block';
+                document.getElementById('alerta-apis').textContent = `Este CEP foi encontrado nas seguintes APIs: ${apis.join(', ')}`;
+            }
+            
+            // Carrega mapa
+            loadMap(mainData);
+            
+            if (mostrarDetalhesAutomaticamente) {
+                document.getElementById('detalhes').style.display = 'block';
+            }
+        }
+
+        // Mapa interativo
+        function loadMap(data) {
+            const cidade = data.localidade || data.city;
+            const estado = data.uf || data.state;
+            
+            if (!cidade || !estado) return;
+            
+            // Destroy existing map
+            if (currentMap) {
+                currentMap.remove();
+                currentMap = null;
+            }
+            
+            document.getElementById('map').style.display = 'block';
+            
+            // Coordenadas aproximadas para algumas cidades (em uma aplicação real, usaria um serviço de geocoding)
+            const coordinates = getCoordinatesForCity(cidade, estado);
+            
+            currentMap = L.map('map').setView(coordinates, 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(currentMap);
+            
+            L.marker(coordinates).addTo(currentMap)
+                .bindPopup(`${cidade}, ${estado}`)
+                .openPopup();
+        }
+
+        function getCoordinatesForCity(cidade, estado) {
+            // Coordenadas aproximadas para algumas cidades principais
+            const cityCoordinates = {
+                'São Paulo': [-23.5505, -46.6333],
+                'Rio de Janeiro': [-22.9068, -43.1729],
+                'Belo Horizonte': [-19.9167, -43.9345],
+                'Brasília': [-15.7942, -47.8822],
+                'Salvador': [-12.9777, -38.5016],
+                'Fortaleza': [-3.7319, -38.5267],
+                'Recife': [-8.0476, -34.8770],
+                'Porto Alegre': [-30.0346, -51.2177],
+                'Curitiba': [-25.4284, -49.2733],
+                'Goiânia': [-16.6799, -49.2550]
+            };
+            
+            return cityCoordinates[cidade] || [-15.7942, -47.8822]; // Default para Brasília
+        }
+
+        // Funcionalidade de cópia
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Texto copiado para a área de transferência!');
+            }).catch(() => {
+                showToast('Erro ao copiar texto', 'error');
+            });
+        }
+
+        function copyFullResult() {
+            const logradouro = document.getElementById('logradouro').textContent;
+            const bairro = document.getElementById('bairro').textContent;
+            const cidade = document.getElementById('cidade').textContent;
+            const estado = document.getElementById('estado').textContent;
+            
+            const fullAddress = `${logradouro}\n${bairro}\n${cidade}\n${estado}`;
+            
+            navigator.clipboard.writeText(fullAddress).then(() => {
+                showToast('Endereço completo copiado!');
+            }).catch(() => {
+                showToast('Erro ao copiar endereço', 'error');
+            });
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Acessibilidade
+        function toggleHighContrast() {
+            document.body.classList.toggle('high-contrast');
+            localStorage.setItem('highContrast', document.body.classList.contains('high-contrast'));
+            showToast('Modo de alto contraste ' + (document.body.classList.contains('high-contrast') ? 'ativado' : 'desativado'));
+        }
+
+        function changeFontSize(change) {
+            currentFontSize += change;
+            if (currentFontSize < 12) currentFontSize = 12;
+            if (currentFontSize > 24) currentFontSize = 24;
+            
+            document.body.style.fontSize = currentFontSize + 'px';
+            localStorage.setItem('fontSize', currentFontSize);
+            showToast(`Tamanho da fonte: ${currentFontSize}px`);
+        }
+
+        function loadAccessibilitySettings() {
+            const highContrast = localStorage.getItem('highContrast') === 'true';
+            const fontSize = localStorage.getItem('fontSize');
+            
+            if (highContrast) {
+                document.body.classList.add('high-contrast');
+            }
+            
+            if (fontSize) {
+                currentFontSize = parseInt(fontSize);
+                document.body.style.fontSize = currentFontSize + 'px';
+            }
+        }
+
+        // Navegação por teclado
+        function handleGlobalKeyDown(event) {
+            // Ctrl+K para focar no campo de busca
+            if (event.ctrlKey && event.key === 'k') {
+                event.preventDefault();
+                document.getElementById('cep').focus();
+            }
+            
+            // Escape para limpar formulário
+            if (event.key === 'Escape') {
+                limparResultado();
+                document.getElementById('cep').value = '';
+                document.getElementById('cep').focus();
+            }
+        }
+
+        function handleKeyPress(event, action, param) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                
+                switch (action) {
+                    case 'view-all-results':
+                        showAllResults();
+                        break;
+                    case 'loadFromHistory':
+                        loadFromHistory(param);
+                        break;
+                }
+            }
+        }
+
+        // Utilitários
         function limparResultado() {
             document.getElementById('logradouro').textContent = '';
             document.getElementById('bairro').textContent = '';
@@ -298,121 +1000,39 @@
             document.getElementById('resultado-postmon').textContent = '';
             document.getElementById('detalhes').style.display = 'none';
             document.getElementById('view-all-results').style.display = 'none';
+            document.getElementById('map').style.display = 'none';
+            
+            // Esconde elementos do resultado
+            document.querySelector('.resultado-header').style.display = 'none';
+            document.getElementById('logradouro-item').style.display = 'none';
+            document.getElementById('bairro-item').style.display = 'none';
+            document.getElementById('cidade-item').style.display = 'none';
+            document.getElementById('estado-item').style.display = 'none';
+            
+            if (currentMap) {
+                currentMap.remove();
+                currentMap = null;
+            }
         }
 
-        async function fetchEnderecoFromAPIs(cep) {
-            // Limpa os resultados anteriores
-            limparResultado();
-
-            // Mostra a tela de carregamento
-            document.getElementById('loadingOverlay').style.display = 'flex';
-
-            const apis = [
-                {
-                    name: 'ViaCEP',
-                    url: `https://viacep.com.br/ws/${cep}/json/`,
-                    resultElement: document.getElementById('resultado-viacep')
-                },
-                {
-                    name: 'APICEP',
-                    url: `https://ws.apicep.com/cep/${cep}.json`,
-                    resultElement: document.getElementById('resultado-apicep')
-                },
-                {
-                    name: 'BrasilAPI',
-                    url: `https://brasilapi.com.br/api/cep/v1/${cep}`,
-                    resultElement: document.getElementById('resultado-brasilapi')
-                },
-                {
-                    name: 'Postmon',
-                    url: `https://api.postmon.com.br/v1/cep/${cep}`,
-                    resultElement: document.getElementById('resultado-postmon')
-                }
-            ];
-
-            let mainData = null;
-            let apisEncontradas = [];
-            let firstValidApi = null;
-
-            document.getElementById('mensagem-erro').style.display = 'none';
+        function showAllResults() {
+            mostrarDetalhesAutomaticamente = true;
+            document.getElementById('detalhes').style.display = 'block';
             document.getElementById('view-all-results').style.display = 'none';
-            document.getElementById('alerta-apis').textContent = '';
-            document.getElementById('detalhes').style.display = 'none';
-
-            for (let api of apis) {
-                try {
-                    const response = await fetch(api.url);
-                    if (!response.ok) throw new Error(`Erro ${response.status}`);
-
-                    const data = await response.json();
-
-                    if (data.erro) {
-                        api.resultElement.textContent = `CEP não encontrado na API ${api.name}.`;
-                        continue;
-                    }
-
-                    api.resultElement.textContent = JSON.stringify(data, null, 2);
-                    apisEncontradas.push(api.name);
-
-                    if (!mainData || !firstValidApi) {
-                        mainData = data;
-                        firstValidApi = api.name;
-                    }
-                } catch (error) {
-                    api.resultElement.textContent = `Erro ao consultar ${api.name}: ${error.message}`;
-                }
-            }
-
-            if (mainData) {
-                document.getElementById('logradouro').textContent = `Logradouro: ${mainData.logradouro || mainData.street || 'N/A'}`;
-                document.getElementById('bairro').textContent = `Bairro: ${mainData.bairro || mainData.neighborhood || 'N/A'}`;
-                document.getElementById('cidade').textContent = `Cidade: ${mainData.localidade || mainData.city || 'N/A'}`;
-                document.getElementById('estado').textContent = `Estado: ${mainData.uf || mainData.state || 'N/A'}`;
-
-                if (apisEncontradas.length > 1) {
-                    document.getElementById('view-all-results').style.display = 'block';
-                    document.getElementById('alerta-apis').textContent = `Este CEP foi encontrado nas seguintes APIs: ${apisEncontradas.join(', ')}`;
-                }
-
-                if (mostrarDetalhesAutomaticamente) {
-                    document.getElementById('detalhes').style.display = 'block';
-                }
-            } else {
-                document.getElementById('mensagem-erro').textContent = `CEP não localizado em nenhuma das APIs.`;
-                document.getElementById('mensagem-erro').style.display = 'block';
-                document.getElementById('detalhes').style.display = 'block';
-            }
-
-            // Esconde a tela de carregamento
-            document.getElementById('loadingOverlay').style.display = 'none';
         }
 
-        document.getElementById('cepForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        function handleFormSubmit(event) {
+            event.preventDefault();
             const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            
             if (cep.length !== 8) {
-                alert('Por favor, insira um CEP válido.');
+                showToast('Por favor, insira um CEP válido com 8 dígitos.', 'error');
                 return;
             }
-
-            try {
-                await fetchEnderecoFromAPIs(cep);
-            } catch (error) {
-                console.error('Erro:', error);
-            }
-        });
-
-        document.getElementById('view-all-results').addEventListener('click', function() {
-            mostrarDetalhesAutomaticamente = true;
-            document.getElementById('detalhes').style.display = 'block';
-            document.getElementById('view-all-results').style.display = 'none';
-        });
-
-        document.getElementById('toggleDetalhado').addEventListener('click', function() {
-            mostrarDetalhesAutomaticamente = true;
-            document.getElementById('detalhes').style.display = 'block';
-            document.getElementById('view-all-results').style.display = 'none';
-        });
+            
+            const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
+            debouncedSearch(cep);
+        }
     </script>
 </body>
 </html>
