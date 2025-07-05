@@ -1,357 +1,739 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de CNPJ</title>
+    <title>Consulta de CNPJ - Hub de Pesquisas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-            color: #333;
-            position: relative;
-            transition: background 0.3s ease-in-out;
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            --background-light: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --background-dark: linear-gradient(135deg, #232526 0%, #414345 100%);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-light: #ffffff;
+            --text-dark: #2d3748;
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --blur: blur(4px);
+            --error-color: #ff6b6b;
+            --success-color: #4ecdc4;
         }
 
+        [data-theme="dark"] {
+            --glass-bg: rgba(0, 0, 0, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-light: #ffffff;
+            --shadow-light: var(--shadow-dark);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-light);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] body {
+            background: var(--background-dark);
+        }
+
+        /* Animated background elements */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .bg-animation::before,
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .bg-animation::before {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .bg-animation::after {
+            bottom: 10%;
+            right: 10%;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Header controls */
+        .header-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main container */
         .container {
-            background-color: #fff;
-            padding: 25px 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-top: 80px;
+        }
+
+        .main-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 30px;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header section */
+        .page-header {
             text-align: center;
-            transition: transform 0.3s ease;
+            margin-bottom: 40px;
+        }
+
+        .page-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--secondary-gradient);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 10px 25px rgba(240, 147, 251, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         h1 {
-            font-size: 26px;
-            margin-bottom: 25px;
-            color: #0984e3;
-            animation: fadeIn 1s ease-in-out;
+            color: var(--text-light);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Form styling */
+        .form-container {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .modern-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: var(--blur);
+            transition: all 0.3s ease;
+        }
+
+        .modern-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .modern-btn {
+            background: var(--secondary-gradient);
+            border: none;
+            border-radius: 16px;
+            padding: 16px 32px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(240, 147, 251, 0.4);
+        }
+
+        .modern-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Loading state */
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--text-light);
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Result sections */
+        .result-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        form {
+        .result-section h2 {
+            color: var(--text-light);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            gap: 10px;
         }
 
-        input[type="text"] {
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 100%;
-            box-sizing: border-box;
-            font-size: 16px;
-            transition: border 0.3s ease;
-        }
-
-        input[type="text"]:focus {
-            border-color: #0984e3;
-            outline: none;
-        }
-
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: #0984e3;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #074ea8;
-        }
-
-        #resultado {
-            margin-top: 30px;
-            text-align: left;
-            font-size: 16px;
+        .result-item {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+            font-size: 14px;
             line-height: 1.6;
-            display: none;
         }
 
-        p {
-            margin: 5px 0;
+        .result-item strong {
+            color: var(--text-light);
+            font-weight: 600;
         }
 
-        #resultado h2 {
-            color: #333;
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        #mensagem-erro {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        #json-bruto,
-        #dados-completos {
-            margin-top: 20px;
-            font-size: 14px;
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            max-height: 300px;
-            overflow-y: auto;
-            display: none;
-        }
-
-        .socios {
-            margin-top: 20px;
-        }
-
-        .socios h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .socios ul {
-            list-style-type: none;
+        /* Socios section */
+        .socios-list {
+            list-style: none;
             padding: 0;
         }
 
-        .socios li {
+        .socios-list li {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 12px;
             margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        #mostrar-json-btn,
-        #mostrar-dados-completos-btn,
-        #historico-btn,
-        #exportar-historico-btn,
-        #limpar-historico-btn {
-            margin-top: 10px;
-            background-color: #0984e3;
-            color: white;
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .action-btn {
+            background: var(--primary-gradient);
             border: none;
-            padding: 10px;
-            border-radius: 5px;
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-            width: 200px;
-            transition: background-color 0.3s ease;
-            display: none; /* Botão começa invisível */
-        }
-
-        #mostrar-json-btn:hover,
-        #mostrar-dados-completos-btn:hover,
-        #historico-btn:hover,
-        #exportar-historico-btn:hover,
-        #limpar-historico-btn:hover {
-            background-color: #074ea8;
-        }
-
-        /* Estilo para os dados completos */
-        .dados-completos-container {
-            background-color: #f8f8f8;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-
-        .dados-completos-container h3 {
-            color: #0984e3;
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .dados-completos-container p {
-            margin: 5px 0;
-            line-height: 1.5;
-        }
-
-        .dados-completos-container strong {
-            color: #333;
-        }
-
-        #historico-container {
-            margin-top: 20px;
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            max-height: 300px;
-            overflow-y: auto;
+            transition: all 0.3s ease;
             display: none;
         }
 
-        #historico-container ul {
-            list-style-type: none;
-            padding: 0;
+        .action-btn.show {
+            display: inline-block;
         }
 
-        #historico-container li {
-            margin-bottom: 10px;
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        /* Estilo do botão "Voltar ao Topo" */
-        #voltar-topo-btn {
-            position: fixed;
-            bottom: 50px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            font-size: 24px;
-            background-color: #0984e3;
+        /* Expandable sections */
+        .expandable-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .expandable-section.show {
+            display: block;
+        }
+
+        .expandable-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .expandable-content pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Error messages */
+        .error-message {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
             color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: none;
+            font-weight: 500;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Back to top button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--secondary-gradient);
             border: none;
             border-radius: 50%;
+            color: white;
+            font-size: 20px;
             cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            display: none;
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
             z-index: 1000;
         }
 
-        #voltar-topo-btn:hover {
-            background-color: #074ea8;
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
         }
 
-        
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(240, 147, 251, 0.6);
+        }
 
+        /* Responsive design */
         @media (max-width: 768px) {
             .container {
-                width: 90%;
-                padding: 20px;
+                padding-top: 120px;
+            }
+
+            .main-card {
+                padding: 25px 20px;
+                margin: 10px;
             }
 
             h1 {
-                font-size: 24px;
+                font-size: 2rem;
             }
 
-            input[type="text"],
-            button {
+            .page-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 28px;
+            }
+
+            .header-controls {
+                top: 15px;
+                right: 15px;
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-card {
+                margin: 5px;
+                padding: 20px 15px;
+            }
+
+            .modern-input {
+                padding: 14px 16px;
                 font-size: 14px;
-                padding: 10px;
             }
 
-            #resultado h2 {
-                font-size: 18px;
-            }
-
-            #view-all-results {
+            .modern-btn {
+                padding: 14px 24px;
                 font-size: 14px;
-                padding: 10px 20px;
             }
+        }
 
-            .toggle-detalhado {
-                font-size: 16px;
-            }
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success-gradient);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>Consulta de CNPJ</h1>
-        <form id="cnpjForm">
-            <input type="text" id="cnpj" name="cnpj" placeholder="Digite o CNPJ" required autocomplete="on">
-            <button type="submit">Consultar</button>
-        </form>
-        <div id="mensagem-carregamento" style="display:none;">Carregando...</div>
-        <div id="resultado">
-            <h2>Detalhes da Empresa:</h2>
-            <p id="nome"></p>
-            <p id="fantasia"></p>
-            <p id="situacao"></p>
-            <p id="atividade_principal"></p>
-            <p id="endereco"></p>
-            <p id="telefone"></p>
-            <p id="email"></p>
-            <p id="capital_social"></p>
-            <p id="natureza_juridica"></p>
-            <p id="qualificacao_responsavel"></p>
-            <div class="socios" id="socios">
-                <h3>Sócios:</h3>
-                <ul id="lista-socios"></ul>
-            </div>
-        </div>
-        <div id="mensagem-erro"></div>
-        <button id="mostrar-json-btn" style="display: none;">Mostrar JSON Bruto</button>
-        <div id="json-bruto"></div>
-        <button id="mostrar-dados-completos-btn" style="display: none;">Mostrar Dados Completos</button>
-        <div id="dados-completos"></div>
-        <button id="historico-btn" style="display: none;">Mostrar Histórico</button>
-        <div id="historico-container"></div>
-        <button id="exportar-historico-btn" style="display: none;">Exportar Histórico</button>
-        <button id="limpar-historico-btn" style="display: none;">Limpar Histórico</button>
+    <div class="bg-animation"></div>
+    
+    <div class="header-controls">
+        <a href="index.html" class="control-btn" title="Voltar ao início">
+            <i class="fas fa-home"></i>
+        </a>
+        <button class="control-btn" id="themeToggle" title="Alternar tema">
+            <i class="fas fa-moon"></i>
+        </button>
     </div>
 
-    <!-- Botão de voltar ao topo -->
-    <button id="voltar-topo-btn">↑</button>
+    <div class="container">
+        <div class="main-card">
+            <div class="page-header">
+                <div class="page-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h1>Consulta de CNPJ</h1>
+                <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; font-weight: 300;">
+                    Consulte informações detalhadas de empresas
+                </p>
+            </div>
 
-    <!-- Rodapé com menu -->
-   
+            <form id="cnpjForm" class="form-container">
+                <div class="input-group">
+                    <label for="cnpj">CNPJ da Empresa</label>
+                    <input type="text" id="cnpj" name="cnpj" class="modern-input" 
+                           placeholder="Digite o CNPJ (apenas números)" required autocomplete="on">
+                </div>
+                <button type="submit" class="modern-btn">
+                    <i class="fas fa-search" style="margin-right: 8px;"></i>
+                    Consultar CNPJ
+                </button>
+            </form>
 
+            <div id="mensagem-carregamento" class="loading">
+                <div class="spinner"></div>
+                Consultando APIs, aguarde...
+            </div>
 
+            <div id="mensagem-erro" class="error-message"></div>
+
+            <div id="resultado" class="result-section">
+                <h2>
+                    <i class="fas fa-info-circle"></i>
+                    Detalhes da Empresa
+                </h2>
+                <div id="nome" class="result-item"></div>
+                <div id="fantasia" class="result-item"></div>
+                <div id="situacao" class="result-item"></div>
+                <div id="atividade_principal" class="result-item"></div>
+                <div id="endereco" class="result-item"></div>
+                <div id="telefone" class="result-item"></div>
+                <div id="email" class="result-item"></div>
+                <div id="capital_social" class="result-item"></div>
+                <div id="natureza_juridica" class="result-item"></div>
+                <div id="qualificacao_responsavel" class="result-item"></div>
+                
+                <div class="socios" id="socios">
+                    <h3 style="color: var(--text-light); margin: 20px 0 15px 0; font-weight: 600;">
+                        <i class="fas fa-users" style="margin-right: 8px;"></i>
+                        Sócios:
+                    </h3>
+                    <ul id="lista-socios" class="socios-list"></ul>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="mostrar-json-btn" class="action-btn">
+                    <i class="fas fa-code"></i> JSON Bruto
+                </button>
+                <button id="mostrar-dados-completos-btn" class="action-btn">
+                    <i class="fas fa-database"></i> Dados Completos
+                </button>
+                <button id="historico-btn" class="action-btn">
+                    <i class="fas fa-history"></i> Histórico
+                </button>
+                <button id="exportar-historico-btn" class="action-btn">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+                <button id="limpar-historico-btn" class="action-btn">
+                    <i class="fas fa-trash"></i> Limpar Histórico
+                </button>
+            </div>
+
+            <div id="json-bruto" class="expandable-section">
+                <div class="expandable-content">
+                    <h3 style="color: var(--text-light); margin-bottom: 15px;">JSON Bruto:</h3>
+                    <pre id="json-content"></pre>
+                </div>
+            </div>
+
+            <div id="dados-completos" class="expandable-section">
+                <div class="expandable-content">
+                    <h3 style="color: var(--text-light); margin-bottom: 15px;">Dados Completos das APIs:</h3>
+                    <div id="dados-completos-content"></div>
+                </div>
+            </div>
+
+            <div id="historico-container" class="expandable-section">
+                <div class="expandable-content">
+                    <h3 style="color: var(--text-light); margin-bottom: 15px;">Histórico de Consultas:</h3>
+                    <div id="historico-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="voltar-topo-btn" class="back-to-top">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div id="toast" class="toast"></div>
 
     <script>
         // Carregar o token de configuração
-        let apiTokenReceitaWS;
-    
-        fetch('config.js')
-          .then(response => response.text())
-          .then(scriptContent => {
-            eval(scriptContent);  // Executa o conteúdo do arquivo de configuração
-            apiTokenReceitaWS = config.apiTokenReceitaWS;
-    
-            console.log('Token carregado:', apiTokenReceitaWS);
-    
-            // Continue com o restante do código que usa o token...
-          })
-          .catch(error => console.error('Erro ao carregar o token:', error));
-    </script>
-    <script>
+        let apiTokenReceitaWS = 'your-token-here'; // Substitua pelo seu token
+
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', currentTheme);
+        updateIcon(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
+        function updateIcon(theme) {
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Back to top functionality
+        const backToTopBtn = document.getElementById('voltar-topo-btn');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.classList.remove('show');
+            }
+        });
+
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // CNPJ validation and formatting
+        document.getElementById('cnpj').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 14) {
+                // Format CNPJ: XX.XXX.XXX/XXXX-XX
+                value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                value = value.replace(/(\d{4})(\d)/, '$1-$2');
+                e.target.value = value;
+            }
+        });
+
+        // API URLs and configuration
         const apiUrlReceitaWS = 'https://www.receitaws.com.br/v1/cnpj/';
-      
         const apiUrlOpenCNPJ = 'https://opencnpj.com/v1/cnpj/';
         const historicoConsultas = JSON.parse(localStorage.getItem('historicoConsultas')) || [];
 
-        let apiResults = []; // Variável para armazenar os dados completos de cada API
+        let apiResults = [];
 
-        // Exibe o botão "Limpar Histórico" se houver algo no histórico
+        // Show history button if there are previous searches
         if (historicoConsultas.length > 0) {
-            document.getElementById('limpar-historico-btn').style.display = 'block';
+            document.getElementById('limpar-historico-btn').classList.add('show');
         }
 
+        // Form submission
         document.getElementById('cnpjForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const cnpj = document.getElementById('cnpj').value.replace(/\D/g, '');
 
             if (!validarCNPJ(cnpj)) {
-                alert('Por favor, insira um CNPJ válido.');
+                showToast('Por favor, insira um CNPJ válido.', 'error');
                 return;
             }
 
-            document.getElementById('mensagem-carregamento').style.display = 'block';
+            // Show loading
+            document.getElementById('mensagem-carregamento').classList.add('show');
+            
+            // Hide previous results
+            hideAllSections();
 
             const apis = [
                 `https://brasilapi.com.br/api/cnpj/v1/${cnpj}`,
@@ -360,27 +742,42 @@
                 `${apiUrlOpenCNPJ}${cnpj}`
             ];
 
-            apiResults = await Promise.all(apis.map(url => url.includes('receitaws') ? fetchJSONP(url) : fetchFromAPI(url)));
+            try {
+                apiResults = await Promise.all(apis.map(url => 
+                    url.includes('receitaws') ? fetchJSONP(url) : fetchFromAPI(url)
+                ));
 
-            document.getElementById('mensagem-carregamento').style.display = 'none';
+                document.getElementById('mensagem-carregamento').classList.remove('show');
 
-            const mergedData = mergeData(apiResults);
+                const mergedData = mergeData(apiResults);
 
-            if (Object.keys(mergedData).length === 0) {
-                document.getElementById('mensagem-erro').textContent = `Erro ao consultar o CNPJ em todas as APIs disponíveis.`;
-                document.getElementById('mensagem-erro').style.display = 'block';
-                return;
-            }
+                if (Object.keys(mergedData).length === 0) {
+                    document.getElementById('mensagem-erro').textContent = 
+                        'Erro ao consultar o CNPJ em todas as APIs disponíveis.';
+                    document.getElementById('mensagem-erro').classList.add('show');
+                    return;
+                }
 
-            salvarHistoricoConsulta(cnpj, mergedData);
-            exibirResultado(mergedData);
-            exibirHistorico();
+                salvarHistoricoConsulta(cnpj, mergedData);
+                exibirResultado(mergedData);
+                exibirHistorico();
+                showToast('Consulta realizada com sucesso!');
 
-            // Verifica novamente se há histórico para exibir o botão "Limpar Histórico"
-            if (historicoConsultas.length > 0) {
-                document.getElementById('limpar-historico-btn').style.display = 'block';
+                if (historicoConsultas.length > 0) {
+                    document.getElementById('limpar-historico-btn').classList.add('show');
+                }
+            } catch (error) {
+                document.getElementById('mensagem-carregamento').classList.remove('show');
+                showToast('Erro na consulta. Tente novamente.', 'error');
             }
         });
+
+        function hideAllSections() {
+            document.getElementById('resultado').classList.remove('show');
+            document.getElementById('mensagem-erro').classList.remove('show');
+            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('show'));
+            document.querySelectorAll('.expandable-section').forEach(section => section.classList.remove('show'));
+        }
 
         async function fetchFromAPI(url, options = {}) {
             try {
@@ -436,7 +833,6 @@
                 mergedData.natureza_juridica = mergedData.natureza_juridica || result.natureza_juridica || 'Informação não disponível';
                 mergedData.qualificacao_responsavel = mergedData.qualificacao_responsavel || result.qualificacao_do_responsavel?.descricao || 'Informação não disponível';
 
-                // Prioriza os sócios da API 2
                 if (result.qsa && result.qsa.length > 0) {
                     mergedData.socios = result.qsa;
                 } else if (!mergedData.socios) {
@@ -448,31 +844,26 @@
         }
 
         function exibirResultado(mergedData) {
-            document.getElementById('resultado').style.display = 'block';
-            document.getElementById('nome').textContent = `Nome: ${mergedData.nome}`;
-            document.getElementById('fantasia').textContent = `Nome Fantasia: ${mergedData.fantasia}`;
-            document.getElementById('situacao').textContent = `Situação: ${mergedData.situacao}`;
-            document.getElementById('atividade_principal').textContent = mergedData.atividade_principal && mergedData.atividade_principal.length > 0 ?
-                `Atividade Principal: ${mergedData.atividade_principal[0].text}` :
-                'Atividade Principal: Informação não disponível';
-            document.getElementById('endereco').textContent = `Endereço: ${mergedData.logradouro}, ${mergedData.numero} - ${mergedData.bairro}, ${mergedData.municipio} - ${mergedData.uf}, ${mergedData.cep}`;
-            document.getElementById('telefone').textContent = `Telefone: ${mergedData.telefone}`;
-            document.getElementById('email').textContent = `Email: ${mergedData.email}`;
-            document.getElementById('capital_social').textContent = `Capital Social: ${mergedData.capital_social}`;
-            document.getElementById('natureza_juridica').textContent = `Natureza Jurídica: ${mergedData.natureza_juridica}`;
-            document.getElementById('qualificacao_responsavel').textContent = `Qualificação do Responsável: ${mergedData.qualificacao_responsavel}`;
+            document.getElementById('resultado').classList.add('show');
+            document.getElementById('nome').innerHTML = `<strong>Nome:</strong> ${mergedData.nome}`;
+            document.getElementById('fantasia').innerHTML = `<strong>Nome Fantasia:</strong> ${mergedData.fantasia}`;
+            document.getElementById('situacao').innerHTML = `<strong>Situação:</strong> ${mergedData.situacao}`;
+            document.getElementById('atividade_principal').innerHTML = mergedData.atividade_principal && mergedData.atividade_principal.length > 0 ?
+                `<strong>Atividade Principal:</strong> ${mergedData.atividade_principal[0].text}` :
+                '<strong>Atividade Principal:</strong> Informação não disponível';
+            document.getElementById('endereco').innerHTML = `<strong>Endereço:</strong> ${mergedData.logradouro}, ${mergedData.numero} - ${mergedData.bairro}, ${mergedData.municipio} - ${mergedData.uf}, ${mergedData.cep}`;
+            document.getElementById('telefone').innerHTML = `<strong>Telefone:</strong> ${mergedData.telefone}`;
+            document.getElementById('email').innerHTML = `<strong>Email:</strong> ${mergedData.email}`;
+            document.getElementById('capital_social').innerHTML = `<strong>Capital Social:</strong> ${mergedData.capital_social}`;
+            document.getElementById('natureza_juridica').innerHTML = `<strong>Natureza Jurídica:</strong> ${mergedData.natureza_juridica}`;
+            document.getElementById('qualificacao_responsavel').innerHTML = `<strong>Qualificação do Responsável:</strong> ${mergedData.qualificacao_responsavel}`;
 
             exibirSocios(mergedData.socios);
 
-            document.getElementById('mensagem-erro').style.display = 'none';
-            document.getElementById('mostrar-json-btn').style.display = 'block';
-            document.getElementById('mostrar-dados-completos-btn').style.display = 'block';
-            document.getElementById('historico-btn').style.display = 'block';
-            document.getElementById('exportar-historico-btn').style.display = 'block';
-            document.getElementById('limpar-historico-btn').style.display = 'block';
-            document.getElementById('json-bruto').style.display = 'none';
-            document.getElementById('json-bruto').textContent = JSON.stringify(mergedData, null, 2);
-            document.getElementById('dados-completos').style.display = 'none';
+            document.getElementById('mensagem-erro').classList.remove('show');
+            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.add('show'));
+            
+            document.getElementById('json-content').textContent = JSON.stringify(mergedData, null, 2);
             exibirDadosCompletos(apiResults);
         }
 
@@ -480,10 +871,10 @@
             const listaSocios = document.getElementById('lista-socios');
             listaSocios.innerHTML = '';
 
-            if (socios.length > 0) {
+            if (socios && socios.length > 0) {
                 socios.forEach(socio => {
                     const li = document.createElement('li');
-                    li.textContent = `Nome: ${socio.nome || 'N/A'}, Qualificação: ${socio.qual || 'N/A'}`;
+                    li.innerHTML = `<strong>Nome:</strong> ${socio.nome || 'N/A'}<br><strong>Qualificação:</strong> ${socio.qual || 'N/A'}`;
                     listaSocios.appendChild(li);
                 });
             } else {
@@ -494,34 +885,45 @@
         }
 
         function exibirDadosCompletos(results) {
-            const container = document.getElementById('dados-completos');
+            const container = document.getElementById('dados-completos-content');
             container.innerHTML = '';
 
             results.forEach((result, index) => {
                 if (!result) return;
 
                 const apiContainer = document.createElement('div');
-                apiContainer.className = 'dados-completos-container';
+                apiContainer.style.cssText = `
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 20px;
+                    border-radius: 16px;
+                    margin-bottom: 20px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                `;
 
                 apiContainer.innerHTML = `
-                    <h3>API ${index + 1}</h3>
-                    <p><strong>CNPJ Raiz:</strong> ${result.cnpj_raiz || result.cnpj || 'N/A'}</p>
-                    <p><strong>Razão Social:</strong> ${result.razao_social || result.nome || 'N/A'}</p>
-                    <p><strong>Capital Social:</strong> ${result.capital_social || 'N/A'}</p>
-                    <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
-                    <p><strong>Natureza Jurídica:</strong> ${result.natureza_juridica || 'N/A'}</p>
-                    <p><strong>Qualificação do Responsável:</strong> ${result.qualificacao_do_responsavel?.descricao || 'N/A'}</p>
-                    <p><strong>Simples Nacional:</strong> ${result.simples?.simples || 'N/A'} (MEI: ${result.simples?.mei || 'N/A'})</p>
-                    <p><strong>Atividade Principal:</strong> ${result.atividade_principal?.[0]?.text || 'N/A'}</p>
-                    <p><strong>Endereço:</strong> ${result.logradouro || 'N/A'}, ${result.numero || 'N/A'} - ${result.bairro || 'N/A'}, ${result.municipio || 'N/A'} - ${result.uf || 'N/A'}, ${result.cep || 'N/A'}</p>
-                    <p><strong>Telefone:</strong> ${result.telefone || 'N/A'}</p>
-                    <p><strong>Email:</strong> ${result.email || 'N/A'}</p>
-                    <h4>Sócios</h4>
-                    <ul>
-                        ${result.qsa?.map(socio => `
-                            <li><strong>Nome:</strong> ${socio.nome || 'N/A'}, <strong>Qualificação:</strong> ${socio.qual || 'N/A'}</li>
-                        `).join('') || '<li>Informação não disponível</li>'}
-                    </ul>
+                    <h3 style="color: var(--text-light); margin-bottom: 15px;">API ${index + 1}</h3>
+                    <div style="color: rgba(255, 255, 255, 0.9); line-height: 1.6;">
+                        <p><strong>CNPJ Raiz:</strong> ${result.cnpj_raiz || result.cnpj || 'N/A'}</p>
+                        <p><strong>Razão Social:</strong> ${result.razao_social || result.nome || 'N/A'}</p>
+                        <p><strong>Capital Social:</strong> ${result.capital_social || 'N/A'}</p>
+                        <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
+                        <p><strong>Natureza Jurídica:</strong> ${result.natureza_juridica || 'N/A'}</p>
+                        <p><strong>Qualificação do Responsável:</strong> ${result.qualificacao_do_responsavel?.descricao || 'N/A'}</p>
+                        <p><strong>Simples Nacional:</strong> ${result.simples?.simples || 'N/A'} (MEI: ${result.simples?.mei || 'N/A'})</p>
+                        <p><strong>Atividade Principal:</strong> ${result.atividade_principal?.[0]?.text || 'N/A'}</p>
+                        <p><strong>Endereço:</strong> ${result.logradouro || 'N/A'}, ${result.numero || 'N/A'} - ${result.bairro || 'N/A'}, ${result.municipio || 'N/A'} - ${result.uf || 'N/A'}, ${result.cep || 'N/A'}</p>
+                        <p><strong>Telefone:</strong> ${result.telefone || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${result.email || 'N/A'}</p>
+                        <h4 style="color: var(--text-light); margin: 15px 0 10px 0;">Sócios</h4>
+                        <ul style="list-style: none; padding: 0;">
+                            ${result.qsa?.map(socio => `
+                                <li style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                                    <strong>Nome:</strong> ${socio.nome || 'N/A'}<br>
+                                    <strong>Qualificação:</strong> ${socio.qual || 'N/A'}
+                                </li>
+                            `).join('') || '<li>Informação não disponível</li>'}
+                        </ul>
+                    </div>
                 `;
 
                 container.appendChild(apiContainer);
@@ -529,35 +931,73 @@
         }
 
         function salvarHistoricoConsulta(cnpj, data) {
-            historicoConsultas.push({
+            historicoConsultas.unshift({
                 cnpj,
                 data,
                 timestamp: new Date().toISOString()
             });
+            
+            // Limita a 20 itens
+            if (historicoConsultas.length > 20) {
+                historicoConsultas.splice(20);
+            }
+            
             localStorage.setItem('historicoConsultas', JSON.stringify(historicoConsultas));
         }
 
         function exibirHistorico() {
-            const container = document.getElementById('historico-container');
+            const container = document.getElementById('historico-list');
             container.innerHTML = '';
-            container.style.display = 'block';
+
+            if (historicoConsultas.length === 0) {
+                container.innerHTML = '<p style="color: rgba(255, 255, 255, 0.8);">Nenhuma consulta no histórico</p>';
+                return;
+            }
 
             historicoConsultas.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <strong>Consulta ${index + 1}:</strong> ${item.cnpj} - ${new Date(item.timestamp).toLocaleString()}
-                    <button onclick="recuperarConsulta(${index})">Recuperar</button>
+                const historyItem = document.createElement('div');
+                historyItem.style.cssText = `
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 15px;
+                    border-radius: 12px;
+                    margin-bottom: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
                 `;
-                container.appendChild(li);
+                
+                historyItem.innerHTML = `
+                    <div>
+                        <strong style="color: var(--text-light);">CNPJ:</strong> 
+                        <span style="color: rgba(255, 255, 255, 0.9);">${item.cnpj}</span><br>
+                        <small style="color: rgba(255, 255, 255, 0.7);">
+                            ${new Date(item.timestamp).toLocaleString()}
+                        </small>
+                    </div>
+                    <button onclick="recuperarConsulta(${index})" 
+                            style="background: var(--success-gradient); border: none; border-radius: 8px; 
+                                   padding: 8px 16px; color: white; cursor: pointer; font-size: 12px;">
+                        Recuperar
+                    </button>
+                `;
+                container.appendChild(historyItem);
             });
         }
 
         window.recuperarConsulta = function (index) {
             const consulta = historicoConsultas[index];
             exibirResultado(consulta.data);
-        }
+            showToast('Consulta recuperada do histórico');
+            document.getElementById('historico-container').classList.remove('show');
+        };
 
         function exportarHistorico() {
+            if (historicoConsultas.length === 0) {
+                showToast('Nenhum histórico para exportar', 'error');
+                return;
+            }
+
             let historicoTexto = 'Histórico de Consultas CNPJ\n\n';
 
             historicoConsultas.forEach((item, index) => {
@@ -584,22 +1024,14 @@
                 link.click();
                 URL.revokeObjectURL(url);
             }
+            
+            showToast('Histórico exportado com sucesso!');
         }
-
-        document.getElementById('limpar-historico-btn').addEventListener('click', function () {
-            if (confirm('Tem certeza que deseja limpar o histórico?')) {
-                localStorage.removeItem('historicoConsultas');
-                historicoConsultas.length = 0;
-                document.getElementById('historico-container').innerHTML = '';
-                document.getElementById('limpar-historico-btn').style.display = 'none';
-            }
-        });
 
         function validarCNPJ(cnpj) {
             cnpj = cnpj.replace(/[^\d]+/g, '');
             if (cnpj == '') return false;
-            if (cnpj.length != 14)
-                return false;
+            if (cnpj.length != 14) return false;
 
             // Elimina CNPJs inválidos conhecidos
             if (cnpj == "00000000000000" ||
@@ -615,19 +1047,17 @@
                 return false;
 
             // Valida DVs
-            let tamanho = cnpj.length - 2
+            let tamanho = cnpj.length - 2;
             let numeros = cnpj.substring(0, tamanho);
             let digitos = cnpj.substring(tamanho);
             let soma = 0;
             let pos = tamanho - 7;
             for (let i = tamanho; i >= 1; i--) {
                 soma += numeros.charAt(tamanho - i) * pos--;
-                if (pos < 2)
-                    pos = 9;
+                if (pos < 2) pos = 9;
             }
             let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-            if (resultado != digitos.charAt(0))
-                return false;
+            if (resultado != digitos.charAt(0)) return false;
 
             tamanho = tamanho + 1;
             numeros = cnpj.substring(0, tamanho);
@@ -635,40 +1065,30 @@
             pos = tamanho - 7;
             for (let i = tamanho; i >= 1; i--) {
                 soma += numeros.charAt(tamanho - i) * pos--;
-                if (pos < 2)
-                    pos = 9;
+                if (pos < 2) pos = 9;
             }
             resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-            if (resultado != digitos.charAt(1))
-                return false;
+            if (resultado != digitos.charAt(1)) return false;
 
             return true;
         }
 
+        // Event listeners for action buttons
         document.getElementById('mostrar-json-btn').addEventListener('click', function () {
-            const jsonContainer = document.getElementById('json-bruto');
-            if (jsonContainer.style.display === 'none') {
-                jsonContainer.style.display = 'block';
-            } else {
-                jsonContainer.style.display = 'none';
-            }
+            const section = document.getElementById('json-bruto');
+            section.classList.toggle('show');
         });
 
         document.getElementById('mostrar-dados-completos-btn').addEventListener('click', function () {
-            const dadosContainer = document.getElementById('dados-completos');
-            if (dadosContainer.style.display === 'none') {
-                dadosContainer.style.display = 'block';
-            } else {
-                dadosContainer.style.display = 'none';
-            }
+            const section = document.getElementById('dados-completos');
+            section.classList.toggle('show');
         });
 
         document.getElementById('historico-btn').addEventListener('click', function () {
-            const historicoContainer = document.getElementById('historico-container');
-            if (historicoContainer.style.display === 'none') {
-                historicoContainer.style.display = 'block';
-            } else {
-                historicoContainer.style.display = 'none';
+            const section = document.getElementById('historico-container');
+            section.classList.toggle('show');
+            if (section.classList.contains('show')) {
+                exibirHistorico();
             }
         });
 
@@ -676,25 +1096,20 @@
             exportarHistorico();
         });
 
-        // Exibe histórico ao carregar a página
-        exibirHistorico();
-
-        // Função para exibir o botão "Voltar ao Topo" ao rolar a página
-        window.onscroll = function () {
-            const voltarTopoBtn = document.getElementById('voltar-topo-btn');
-            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                voltarTopoBtn.style.display = 'block';
-            } else {
-                voltarTopoBtn.style.display = 'none';
+        document.getElementById('limpar-historico-btn').addEventListener('click', function () {
+            if (confirm('Tem certeza que deseja limpar o histórico?')) {
+                localStorage.removeItem('historicoConsultas');
+                historicoConsultas.length = 0;
+                document.getElementById('historico-list').innerHTML = '';
+                document.getElementById('limpar-historico-btn').classList.remove('show');
+                showToast('Histórico limpo com sucesso!');
             }
-        };
-
-        // Função para rolar a página de volta ao topo
-        document.getElementById('voltar-topo-btn').addEventListener('click', function () {
-            document.body.scrollTop = 0;
-            document.documentElement.scrollTop = 0;
         });
+
+        // Load history on page load
+        if (historicoConsultas.length > 0) {
+            exibirHistorico();
+        }
     </script>
 </body>
-
 </html>
