@@ -20,7 +20,6 @@
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
-        /* Modo Alto Contraste */
         .high-contrast {
             --primary-color: #000;
             --primary-hover: #333;
@@ -351,7 +350,6 @@
             border: 0;
         }
 
-        /* Melhorias de Acessibilidade */
         *:focus {
             outline: 2px solid var(--warning-color);
             outline-offset: 2px;
@@ -373,7 +371,6 @@
             top: 6px;
         }
 
-        /* Responsividade */
         @media (max-width: 768px) {
             .container {
                 width: 95%;
@@ -532,7 +529,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Variáveis globais
         let mostrarDetalhesAutomaticamente = false;
         let searchDebounceTimer;
         let cepCache = {};
@@ -540,7 +536,6 @@
         let searchHistory = JSON.parse(localStorage.getItem('cepHistory') || '[]');
         let currentFontSize = 16;
 
-        // APIs com prioridade otimizada
         const apis = [
             {
                 name: 'ViaCEP',
@@ -568,47 +563,32 @@
             }
         ];
 
-        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             loadSearchHistory();
             setupEventListeners();
             loadAccessibilitySettings();
         });
 
-        // Event Listeners
         function setupEventListeners() {
-            // Formatação automática do CEP
             document.getElementById('cep').addEventListener('input', handleCepInput);
             document.getElementById('cep').addEventListener('keydown', handleCepKeydown);
-            
-            // Formulário
             document.getElementById('cepForm').addEventListener('submit', handleFormSubmit);
-            
-            // Botões
             document.getElementById('copyResult').addEventListener('click', copyFullResult);
             document.getElementById('clearHistory').addEventListener('click', clearSearchHistory);
             document.getElementById('view-all-results').addEventListener('click', showAllResults);
-            
-            // Acessibilidade
             document.getElementById('toggleContrast').addEventListener('click', toggleHighContrast);
             document.getElementById('increaseFontSize').addEventListener('click', () => changeFontSize(2));
             document.getElementById('decreaseFontSize').addEventListener('click', () => changeFontSize(-2));
-            
-            // Navegação por teclado
             document.addEventListener('keydown', handleGlobalKeyDown);
         }
 
-        // Formatação automática do CEP
         function handleCepInput(event) {
             let value = event.target.value.replace(/\D/g, '');
-            
             if (value.length <= 8) {
                 if (value.length > 5) {
                     value = value.substring(0, 5) + '-' + value.substring(5);
                 }
                 event.target.value = value;
-                
-                // Feedback visual
                 const feedback = document.getElementById('cep-feedback');
                 if (value.replace(/\D/g, '').length === 8) {
                     feedback.textContent = '✓';
@@ -620,18 +600,15 @@
         }
 
         function handleCepKeydown(event) {
-            // Permite apenas números, backspace, delete, tab, enter, home, end, setas
             const allowedKeys = [
                 'Backspace', 'Delete', 'Tab', 'Enter', 'Home', 'End',
                 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
             ];
-            
             if (!allowedKeys.includes(event.key) && !/[0-9]/.test(event.key)) {
                 event.preventDefault();
             }
         }
 
-        // Debounce para busca
         function debounce(func, wait) {
             return function executedFunction(...args) {
                 const later = () => {
@@ -643,7 +620,6 @@
             };
         }
 
-        // Cache de CEPs
         function getCacheKey(cep) {
             return `cep_${cep}`;
         }
@@ -651,11 +627,9 @@
         function getCachedResult(cep) {
             const cacheKey = getCacheKey(cep);
             const cached = cepCache[cacheKey];
-            
-            if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) { // 24 horas
+            if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
                 return cached.data;
             }
-            
             return null;
         }
 
@@ -667,25 +641,17 @@
             };
         }
 
-        // Histórico de buscas
         function addToHistory(cep, address) {
             const historyItem = {
                 cep: cep,
                 address: address,
                 timestamp: Date.now()
             };
-            
-            // Remove duplicatas
             searchHistory = searchHistory.filter(item => item.cep !== cep);
-            
-            // Adiciona no início
             searchHistory.unshift(historyItem);
-            
-            // Limita a 10 itens
             if (searchHistory.length > 10) {
                 searchHistory = searchHistory.slice(0, 10);
             }
-            
             localStorage.setItem('cepHistory', JSON.stringify(searchHistory));
             loadSearchHistory();
         }
@@ -693,40 +659,35 @@
         function loadSearchHistory() {
             const historyList = document.getElementById('historyList');
             const historySection = document.getElementById('historySection');
-            
             if (searchHistory.length === 0) {
                 historySection.style.display = 'none';
                 return;
             }
-            
             historySection.style.display = 'block';
             historyList.innerHTML = '';
-            
             searchHistory.forEach((item, index) => {
                 const historyItem = document.createElement('div');
                 historyItem.className = 'history-item';
                 historyItem.setAttribute('role', 'listitem');
                 historyItem.setAttribute('tabindex', '0');
                 historyItem.setAttribute('aria-label', `CEP ${item.cep} - ${item.address}`);
-                
                 historyItem.innerHTML = `
                     <span onclick="loadFromHistory('${item.cep}')" onkeydown="handleKeyPress(event, 'loadFromHistory', '${item.cep}')">
                         <strong>${item.cep}</strong> - ${item.address}
                     </span>
                     <button onclick="removeFromHistory(${index})" aria-label="Remover do histórico">❌</button>
                 `;
-                
                 historyList.appendChild(historyItem);
             });
         }
 
-        function loadFromHistory(cep) {
+        window.loadFromHistory = function(cep) {
             document.getElementById('cep').value = cep;
             const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
             debouncedSearch(cep.replace(/\D/g, ''));
         }
 
-        function removeFromHistory(index) {
+        window.removeFromHistory = function(index) {
             searchHistory.splice(index, 1);
             localStorage.setItem('cepHistory', JSON.stringify(searchHistory));
             loadSearchHistory();
@@ -740,48 +701,33 @@
             showToast('Histórico limpo com sucesso');
         }
 
-        // Função principal de busca
         async function fetchEnderecoFromAPIs(cep) {
             limparResultado();
-            
-            // Verifica cache primeiro
             const cachedResult = getCachedResult(cep);
             if (cachedResult) {
                 displayResult(cachedResult);
                 showToast('Resultado carregado do cache');
                 return;
             }
-            
             document.getElementById('loadingOverlay').style.display = 'flex';
-            
-            // Ordena APIs por prioridade
             const sortedApis = [...apis].sort((a, b) => a.priority - b.priority);
-            
             let mainData = null;
             let apisEncontradas = [];
             let firstValidApi = null;
-            
-            // Tenta APIs em ordem de prioridade
             for (let api of sortedApis) {
                 try {
                     const response = await fetch(api.url(cep));
                     if (!response.ok) throw new Error(`Erro ${response.status}`);
-                    
                     const data = await response.json();
-                    
                     if (data.erro) {
                         api.resultElement().textContent = `CEP não encontrado na API ${api.name}.`;
                         continue;
                     }
-                    
                     api.resultElement().textContent = JSON.stringify(data, null, 2);
                     apisEncontradas.push(api.name);
-                    
                     if (!mainData) {
                         mainData = data;
                         firstValidApi = api.name;
-                        
-                        // Se encontrou na primeira API (maior prioridade), pode parar
                         if (api.priority === 1) {
                             break;
                         }
@@ -790,16 +736,12 @@
                     api.resultElement().textContent = `Erro ao consultar ${api.name}: ${error.message}`;
                 }
             }
-            
             document.getElementById('loadingOverlay').style.display = 'none';
-            
             if (mainData) {
                 displayResult(mainData, apisEncontradas);
                 setCachedResult(cep, { mainData, apisEncontradas });
-                
                 const addressString = `${mainData.logradouro || mainData.street || ''}, ${mainData.bairro || mainData.neighborhood || ''}, ${mainData.localidade || mainData.city || ''}`;
                 addToHistory(cep, addressString);
-                
                 showToast('Endereço encontrado com sucesso!');
             } else {
                 document.getElementById('mensagem-erro').textContent = 'CEP não localizado em nenhuma das APIs.';
@@ -812,84 +754,74 @@
         function displayResult(data, apisEncontradas = []) {
             const mainData = data.mainData || data;
             const apis = data.apisEncontradas || apisEncontradas;
-            
             document.getElementById('logradouro').textContent = `Logradouro: ${mainData.logradouro || mainData.street || 'N/A'}`;
             document.getElementById('bairro').textContent = `Bairro: ${mainData.bairro || mainData.neighborhood || 'N/A'}`;
             document.getElementById('cidade').textContent = `Cidade: ${mainData.localidade || mainData.city || 'N/A'}`;
             document.getElementById('estado').textContent = `Estado: ${mainData.uf || mainData.state || 'N/A'}`;
-            
-            // Mostra elementos do resultado
             document.querySelector('.resultado-header').style.display = 'flex';
             document.getElementById('logradouro-item').style.display = 'flex';
             document.getElementById('bairro-item').style.display = 'flex';
             document.getElementById('cidade-item').style.display = 'flex';
             document.getElementById('estado-item').style.display = 'flex';
-            
             if (apis.length > 1) {
                 document.getElementById('view-all-results').style.display = 'block';
                 document.getElementById('alerta-apis').textContent = `Este CEP foi encontrado nas seguintes APIs: ${apis.join(', ')}`;
             }
-            
-            // Carrega mapa
             loadMap(mainData);
-            
             if (mostrarDetalhesAutomaticamente) {
                 document.getElementById('detalhes').style.display = 'block';
             }
         }
 
-        // Mapa interativo
-        function loadMap(data) {
-            const cidade = data.localidade || data.city;
-            const estado = data.uf || data.state;
-            
-            if (!cidade || !estado) return;
-            
-            // Destroy existing map
+        // ----------- MELHORIA: MAPA PRECISO COM NOMINATIM -----------
+        async function getCoordinatesFromAddress(address) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept-Language': 'pt-BR'
+                    }
+                });
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        async function loadMap(data) {
+            const logradouro = data.logradouro || data.street || '';
+            const bairro = data.bairro || data.neighborhood || '';
+            const cidade = data.localidade || data.city || '';
+            const estado = data.uf || data.state || '';
+            const cep = data.cep || '';
+            const address = `${logradouro}, ${bairro}, ${cidade}, ${estado}, ${cep}`;
             if (currentMap) {
                 currentMap.remove();
                 currentMap = null;
             }
-            
+            let coordinates = await getCoordinatesFromAddress(address);
+            if (!coordinates) {
+                coordinates = await getCoordinatesFromAddress(`${cidade}, ${estado}`);
+            }
+            if (!coordinates) {
+                coordinates = [-15.7942, -47.8822]; // Brasília
+            }
             document.getElementById('map').style.display = 'block';
-            
-            // Coordenadas aproximadas para algumas cidades (em uma aplicação real, usaria um serviço de geocoding)
-            const coordinates = getCoordinatesForCity(cidade, estado);
-            
-            currentMap = L.map('map').setView(coordinates, 13);
-            
+            currentMap = L.map('map').setView(coordinates, 16);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(currentMap);
-            
             L.marker(coordinates).addTo(currentMap)
-                .bindPopup(`${cidade}, ${estado}`)
+                .bindPopup(address)
                 .openPopup();
         }
+        // ------------------------------------------------------------
 
-        function getCoordinatesForCity(cidade, estado) {
-            // Coordenadas aproximadas para algumas cidades principais
-            const cityCoordinates = {
-                'São Paulo': [-23.5505, -46.6333],
-                'Rio de Janeiro': [-22.9068, -43.1729],
-                'Belo Horizonte': [-19.9167, -43.9345],
-                'Brasília': [-15.7942, -47.8822],
-                'Salvador': [-12.9777, -38.5016],
-                'Fortaleza': [-3.7319, -38.5267],
-                'Recife': [-8.0476, -34.8770],
-                'Porto Alegre': [-30.0346, -51.2177],
-                'Curitiba': [-25.4284, -49.2733],
-                'Goiânia': [-16.6799, -49.2550]
-            };
-            
-            return cityCoordinates[cidade] || [-15.7942, -47.8822]; // Default para Brasília
-        }
-
-        // Funcionalidade de cópia
-        function copyToClipboard(elementId) {
+        window.copyToClipboard = function(elementId) {
             const element = document.getElementById(elementId);
             const text = element.textContent;
-            
             navigator.clipboard.writeText(text).then(() => {
                 showToast('Texto copiado para a área de transferência!');
             }).catch(() => {
@@ -902,9 +834,7 @@
             const bairro = document.getElementById('bairro').textContent;
             const cidade = document.getElementById('cidade').textContent;
             const estado = document.getElementById('estado').textContent;
-            
             const fullAddress = `${logradouro}\n${bairro}\n${cidade}\n${estado}`;
-            
             navigator.clipboard.writeText(fullAddress).then(() => {
                 showToast('Endereço completo copiado!');
             }).catch(() => {
@@ -912,19 +842,16 @@
             });
         }
 
-        // Toast notifications
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = `toast ${type}`;
             toast.style.display = 'block';
-            
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 3000);
         }
 
-        // Acessibilidade
         function toggleHighContrast() {
             document.body.classList.toggle('high-contrast');
             localStorage.setItem('highContrast', document.body.classList.contains('high-contrast'));
@@ -935,7 +862,6 @@
             currentFontSize += change;
             if (currentFontSize < 12) currentFontSize = 12;
             if (currentFontSize > 24) currentFontSize = 24;
-            
             document.body.style.fontSize = currentFontSize + 'px';
             localStorage.setItem('fontSize', currentFontSize);
             showToast(`Tamanho da fonte: ${currentFontSize}px`);
@@ -944,26 +870,20 @@
         function loadAccessibilitySettings() {
             const highContrast = localStorage.getItem('highContrast') === 'true';
             const fontSize = localStorage.getItem('fontSize');
-            
             if (highContrast) {
                 document.body.classList.add('high-contrast');
             }
-            
             if (fontSize) {
                 currentFontSize = parseInt(fontSize);
                 document.body.style.fontSize = currentFontSize + 'px';
             }
         }
 
-        // Navegação por teclado
         function handleGlobalKeyDown(event) {
-            // Ctrl+K para focar no campo de busca
             if (event.ctrlKey && event.key === 'k') {
                 event.preventDefault();
                 document.getElementById('cep').focus();
             }
-            
-            // Escape para limpar formulário
             if (event.key === 'Escape') {
                 limparResultado();
                 document.getElementById('cep').value = '';
@@ -971,10 +891,9 @@
             }
         }
 
-        function handleKeyPress(event, action, param) {
+        window.handleKeyPress = function(event, action, param) {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                
                 switch (action) {
                     case 'view-all-results':
                         showAllResults();
@@ -986,7 +905,6 @@
             }
         }
 
-        // Utilitários
         function limparResultado() {
             document.getElementById('logradouro').textContent = '';
             document.getElementById('bairro').textContent = '';
@@ -1001,14 +919,11 @@
             document.getElementById('detalhes').style.display = 'none';
             document.getElementById('view-all-results').style.display = 'none';
             document.getElementById('map').style.display = 'none';
-            
-            // Esconde elementos do resultado
             document.querySelector('.resultado-header').style.display = 'none';
             document.getElementById('logradouro-item').style.display = 'none';
             document.getElementById('bairro-item').style.display = 'none';
             document.getElementById('cidade-item').style.display = 'none';
             document.getElementById('estado-item').style.display = 'none';
-            
             if (currentMap) {
                 currentMap.remove();
                 currentMap = null;
@@ -1024,12 +939,10 @@
         function handleFormSubmit(event) {
             event.preventDefault();
             const cep = document.getElementById('cep').value.replace(/\D/g, '');
-            
             if (cep.length !== 8) {
                 showToast('Por favor, insira um CEP válido com 8 dígitos.', 'error');
                 return;
             }
-            
             const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
             debouncedSearch(cep);
         }
