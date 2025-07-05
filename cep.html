@@ -3,341 +3,764 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar Endereço pelo CEP - Versão Aprimorada</title>
+    <title>Buscar Endereço pelo CEP - Hub de Pesquisas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --primary-color: #0984e3;
-            --primary-hover: #074ea8;
-            --secondary-color: #74b9ff;
-            --success-color: #27ae60;
-            --success-hover: #219150;
-            --danger-color: #e74c3c;
+            --primary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --secondary-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --accent-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --location-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --background-light: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --background-dark: linear-gradient(135deg, #232526 0%, #414345 100%);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-light: #ffffff;
+            --text-dark: #2d3748;
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
+            --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --blur: blur(4px);
+            --error-color: #ff6b6b;
+            --success-color: #4ecdc4;
             --warning-color: #f39c12;
-            --light-gray: #f0f0f0;
-            --dark-gray: #333;
-            --white: #fff;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .high-contrast {
-            --primary-color: #000;
-            --primary-hover: #333;
-            --secondary-color: #000;
-            --success-color: #000;
-            --success-hover: #333;
-            --danger-color: #000;
-            --warning-color: #000;
-            --light-gray: #fff;
-            --dark-gray: #000;
-            --white: #fff;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        [data-theme="dark"] {
+            --glass-bg: rgba(0, 0, 0, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-light: #ffffff;
+            --shadow-light: var(--shadow-dark);
         }
 
-        .high-contrast body {
-            background: #fff !important;
-            color: #000 !important;
-        }
-
-        .high-contrast .container {
-            background-color: #fff !important;
-            border: 3px solid #000 !important;
-            color: #000 !important;
-        }
-
-        .high-contrast input, .high-contrast button {
-            border: 2px solid #000 !important;
-            background-color: #fff !important;
-            color: #000 !important;
-        }
-
-        .high-contrast button {
-            background-color: #000 !important;
-            color: #fff !important;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Inter', sans-serif;
+            background: var(--background-light);
+            background-attachment: fixed;
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            color: var(--dark-gray);
+            padding: 20px;
             position: relative;
-        }
-
-        .accessibility-controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1001;
-            display: flex;
-            gap: 10px;
-        }
-
-        .accessibility-btn {
-            background: var(--primary-color);
-            color: var(--white);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
+            overflow-x: hidden;
             transition: all 0.3s ease;
         }
 
-        .accessibility-btn:hover,
-        .accessibility-btn:focus {
-            background: var(--primary-hover);
-            outline: 2px solid var(--warning-color);
+        [data-theme="dark"] body {
+            background: var(--background-dark);
         }
 
-        .container {
-            background-color: var(--white);
-            padding: 25px 30px;
-            box-shadow: var(--shadow);
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        h1 {
-            font-size: 26px;
-            margin-bottom: 25px;
-            color: var(--primary-color);
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .input-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        input[type="text"] {
-            padding: 12px;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-            width: 100%;
-            box-sizing: border-box;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(9, 132, 227, 0.2);
-        }
-
-        .input-feedback {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 12px;
-            color: var(--success-color);
-        }
-
-        .buttons-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: var(--primary-color);
-            color: var(--white);
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
-        }
-
-        button:hover,
-        button:focus {
-            background-color: var(--primary-hover);
-            outline: 2px solid var(--warning-color);
-            transform: translateY(-2px);
-        }
-
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .copy-btn {
-            background-color: var(--success-color);
-            font-size: 14px;
-            padding: 8px 16px;
-            min-width: auto;
-        }
-
-        .copy-btn:hover,
-        .copy-btn:focus {
-            background-color: var(--success-hover);
-        }
-
-        .history-section {
-            margin: 20px 0;
-            text-align: left;
-        }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            margin: 5px 0;
-            background-color: var(--light-gray);
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .history-item:hover,
-        .history-item:focus {
-            background-color: #e0e0e0;
-            outline: 2px solid var(--primary-color);
-        }
-
-        .history-item button {
-            background: var(--danger-color);
-            color: var(--white);
-            border: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-            min-width: auto;
-        }
-
-        #resultado {
-            margin-top: 30px;
-            text-align: left;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
-        .resultado-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .resultado-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .resultado-item:last-child {
-            border-bottom: none;
-        }
-
-        #map {
-            height: 300px;
-            width: 100%;
-            margin: 20px 0;
-            border-radius: 10px;
-            display: none;
-        }
-
-        #detalhes {
-            display: none;
-            margin-top: 20px;
-            text-align: left;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .detalhe-api {
-            background-color: var(--light-gray);
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .detalhe-api h4 {
-            margin: 0 0 5px 0;
-            color: var(--primary-color);
-        }
-
-        .detalhe-api pre {
-            background-color: #eee;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-size: 12px;
-        }
-
-        .loading-overlay {
+        /* Animated background elements */
+        .bg-animation {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
+            z-index: -1;
         }
 
-        .loading-overlay .spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid var(--primary-color);
+        .bg-animation::before,
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
+            animation: float 8s ease-in-out infinite;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .bg-animation::before {
+            top: 20%;
+            left: 20%;
+            animation-delay: 0s;
         }
 
-        .toast {
+        .bg-animation::after {
+            bottom: 20%;
+            right: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        /* Header controls */
+        .header-controls {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--success-color);
-            color: var(--white);
-            padding: 12px 20px;
-            border-radius: 5px;
-            z-index: 1002;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-light);
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding-top: 80px;
+        }
+
+        .main-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 30px;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header section */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-gradient);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 10px 25px rgba(74, 172, 254, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        h1 {
+            color: var(--text-light);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Form styling */
+        .form-container {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .modern-input {
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: var(--blur);
+            transition: all 0.3s ease;
+        }
+
+        .modern-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+        }
+
+        .input-feedback {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--success-color);
+            font-size: 20px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+
+        .modern-btn {
+            background: var(--secondary-gradient);
+            border: none;
+            border-radius: 16px;
+            padding: 16px 32px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(67, 233, 123, 0.4);
+        }
+
+        .modern-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--location-gradient);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Loading state */
+        .loading {
             display: none;
-            animation: slideIn 0.3s ease;
+            text-align: center;
+            color: var(--text-light);
+            margin: 20px 0;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        .loading.show {
+            display: block;
         }
 
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* History section */
+        .history-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: none;
+        }
+
+        .history-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .history-section h3 {
+            color: var(--text-light);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .history-item-info {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .history-item-info strong {
+            color: var(--text-light);
+        }
+
+        .history-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .history-btn {
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-btn.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        .history-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Result sections */
+        .result-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .result-section h2 {
+            color: var(--text-light);
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item strong {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .copy-btn {
+            background: var(--success-color);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+            background: #45b7aa;
+        }
+
+        /* Map section */
+        #map {
+            height: 350px;
+            width: 100%;
+            border-radius: 16px;
+            margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 30px 0;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: var(--location-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn.show {
+            display: flex;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Expandable sections */
+        .expandable-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .expandable-section.show {
+            display: block;
+        }
+
+        .expandable-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .expandable-content h3 {
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .api-detail {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .api-detail h4 {
+            color: var(--text-light);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .api-detail pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Error messages */
+        .error-message {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: none;
+            font-weight: 500;
+            animation: shake 0.5s ease-out;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* API Status */
+        .api-status {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .api-status.show {
+            display: block;
+        }
+
+        /* Back to top button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(74, 172, 254, 0.4);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000;
+        }
+
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(74, 172, 254, 0.6);
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding-top: 120px;
+            }
+
+            .main-card {
+                padding: 25px 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .page-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 28px;
+            }
+
+            .header-controls {
+                top: 15px;
+                right: 15px;
+                flex-direction: column;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .modern-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .action-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .result-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .result-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .history-item-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-card {
+                margin: 5px;
+                padding: 20px 15px;
+            }
+
+            .modern-input {
+                padding: 14px 16px 14px 45px;
+                font-size: 14px;
+            }
+
+            .modern-btn {
+                padding: 14px 24px;
+                font-size: 14px;
+            }
+
+            .input-icon {
+                left: 14px;
+                font-size: 16px;
+            }
+        }
+
+        /* Screen reader only */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -350,185 +773,225 @@
             border: 0;
         }
 
-        *:focus {
-            outline: 2px solid var(--warning-color);
-            outline-offset: 2px;
-        }
-
+        /* Skip link */
         .skip-link {
             position: absolute;
             top: -40px;
             left: 6px;
-            background: var(--primary-color);
-            color: var(--white);
-            padding: 8px;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 8px 16px;
             text-decoration: none;
             z-index: 1003;
             border-radius: 4px;
+            font-weight: 500;
         }
 
         .skip-link:focus {
             top: 6px;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                padding: 20px;
-            }
+        /* Focus styles */
+        *:focus {
+            outline: 2px solid var(--warning-color);
+            outline-offset: 2px;
+        }
 
-            .buttons-container {
-                flex-direction: column;
-                align-items: center;
-            }
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: var(--blur);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
 
-            button {
-                width: 100%;
-                max-width: 300px;
-            }
+        .loading-overlay.show {
+            display: flex;
+        }
 
-            .accessibility-controls {
-                position: relative;
-                top: auto;
-                right: auto;
-                justify-content: center;
-                margin-bottom: 20px;
-            }
-
-            .resultado-header {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .resultado-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
+    
     <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
     
-    <div class="accessibility-controls">
-        <button class="accessibility-btn" id="toggleContrast" aria-label="Alternar modo de alto contraste">
-            Alto Contraste
-        </button>
-        <button class="accessibility-btn" id="increaseFontSize" aria-label="Aumentar tamanho da fonte">
-            A+
-        </button>
-        <button class="accessibility-btn" id="decreaseFontSize" aria-label="Diminuir tamanho da fonte">
-            A-
+    <div class="header-controls">
+        <a href="index.html" class="control-btn" title="Voltar ao início">
+            <i class="fas fa-home"></i>
+        </a>
+        <button class="control-btn" id="themeToggle" title="Alternar tema">
+            <i class="fas fa-moon"></i>
         </button>
     </div>
 
-    <div class="container" id="main-content">
-        <h1>Buscar Endereço pelo CEP</h1>
-        
-        <form id="cepForm" role="form" aria-label="Formulário de busca de CEP">
-            <div class="form-group">
-                <div class="input-wrapper">
-                    <label for="cep" class="sr-only">Digite o CEP</label>
-                    <input 
-                        type="text" 
-                        id="cep" 
-                        name="cep" 
-                        placeholder="00000-000" 
-                        maxlength="9"
-                        aria-describedby="cep-help"
-                        aria-required="true"
-                        autocomplete="postal-code"
-                        required
-                    >
-                    <div class="input-feedback" id="cep-feedback" aria-live="polite"></div>
+    <div class="container">
+        <div class="main-card" id="main-content">
+            <div class="page-header">
+                <div class="page-icon">
+                    <i class="fas fa-map-marker-alt"></i>
                 </div>
-                <div id="cep-help" class="sr-only">Digite um CEP válido no formato 00000-000</div>
-                
-                <div class="buttons-container">
-                    <button type="submit" aria-describedby="buscar-help">
+                <h1>Buscar Endereço pelo CEP</h1>
+                <p class="subtitle">
+                    Encontre endereços completos com localização precisa no mapa
+                </p>
+            </div>
+
+            <form id="cepForm" class="form-container" role="form" aria-label="Formulário de busca de CEP">
+                <div class="input-group">
+                    <label for="cep" class="sr-only">Digite o CEP</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-search input-icon"></i>
+                        <input 
+                            type="text" 
+                            id="cep" 
+                            name="cep" 
+                            class="modern-input"
+                            placeholder="Digite o CEP (00000-000)" 
+                            maxlength="9"
+                            aria-describedby="cep-help"
+                            aria-required="true"
+                            autocomplete="postal-code"
+                            required
+                        >
+                        <div class="input-feedback" id="cep-feedback" aria-live="polite"></div>
+                    </div>
+                    <div id="cep-help" class="sr-only">Digite um CEP válido no formato 00000-000</div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="modern-btn" aria-describedby="buscar-help">
+                        <i class="fas fa-search"></i>
                         Buscar Endereço
                     </button>
-                    <button type="button" id="clearHistory" aria-label="Limpar histórico de buscas">
+                    <button type="button" id="clearHistory" class="modern-btn btn-secondary" aria-label="Limpar histórico de buscas">
+                        <i class="fas fa-trash"></i>
                         Limpar Histórico
                     </button>
                 </div>
                 <div id="buscar-help" class="sr-only">Clique para buscar o endereço do CEP informado</div>
+            </form>
+
+            <div id="mensagem-carregamento" class="loading">
+                <div class="spinner"></div>
+                Consultando APIs, aguarde...
             </div>
-        </form>
 
-        <div class="history-section" id="historySection" style="display: none;">
-            <h3>Histórico de Buscas</h3>
-            <div id="historyList" role="list" aria-label="Lista de CEPs buscados anteriormente"></div>
-        </div>
+            <div id="mensagem-erro" class="error-message"></div>
 
-        <div id="resultado" role="region" aria-label="Resultado da busca" aria-live="polite">
-            <div class="resultado-header" style="display: none;">
-                <h2>Endereço Encontrado:</h2>
-                <button class="copy-btn" id="copyResult" aria-label="Copiar endereço completo">
-                    📋 Copiar
+            <div class="history-section" id="historySection">
+                <h3>
+                    <i class="fas fa-history"></i>
+                    Histórico de Buscas
+                </h3>
+                <div id="historyList" role="list" aria-label="Lista de CEPs buscados anteriormente"></div>
+            </div>
+
+            <div id="resultado" class="result-section" role="region" aria-label="Resultado da busca" aria-live="polite">
+                <div class="result-header">
+                    <h2>
+                        <i class="fas fa-map-pin"></i>
+                        Endereço Encontrado
+                    </h2>
+                    <button class="copy-btn" id="copyResult" aria-label="Copiar endereço completo">
+                        <i class="fas fa-copy"></i>
+                        Copiar Tudo
+                    </button>
+                </div>
+                
+                <div class="result-item" id="logradouro-item">
+                    <span id="logradouro"></span>
+                    <button class="copy-btn" onclick="copyToClipboard('logradouro')" aria-label="Copiar logradouro">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                
+                <div class="result-item" id="bairro-item">
+                    <span id="bairro"></span>
+                    <button class="copy-btn" onclick="copyToClipboard('bairro')" aria-label="Copiar bairro">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                
+                <div class="result-item" id="cidade-item">
+                    <span id="cidade"></span>
+                    <button class="copy-btn" onclick="copyToClipboard('cidade')" aria-label="Copiar cidade">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                
+                <div class="result-item" id="estado-item">
+                    <span id="estado"></span>
+                    <button class="copy-btn" onclick="copyToClipboard('estado')" aria-label="Copiar estado">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+
+                <div id="map" aria-label="Mapa com a localização do endereço"></div>
+                
+                <div id="alerta-apis" class="api-status" role="status" aria-live="polite"></div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="view-all-results" class="action-btn" aria-label="Exibir todos os resultados das APIs">
+                    <i class="fas fa-database"></i>
+                    Exibir Detalhes das APIs
                 </button>
             </div>
-            
-            <div class="resultado-item" id="logradouro-item" style="display: none;">
-                <span id="logradouro"></span>
-                <button class="copy-btn" onclick="copyToClipboard('logradouro')" aria-label="Copiar logradouro">📋</button>
-            </div>
-            
-            <div class="resultado-item" id="bairro-item" style="display: none;">
-                <span id="bairro"></span>
-                <button class="copy-btn" onclick="copyToClipboard('bairro')" aria-label="Copiar bairro">📋</button>
-            </div>
-            
-            <div class="resultado-item" id="cidade-item" style="display: none;">
-                <span id="cidade"></span>
-                <button class="copy-btn" onclick="copyToClipboard('cidade')" aria-label="Copiar cidade">📋</button>
-            </div>
-            
-            <div class="resultado-item" id="estado-item" style="display: none;">
-                <span id="estado"></span>
-                <button class="copy-btn" onclick="copyToClipboard('estado')" aria-label="Copiar estado">📋</button>
-            </div>
 
-            <div id="map" aria-label="Mapa com a localização do endereço"></div>
-            
-            <div id="alerta-apis" role="status" aria-live="polite"></div>
-            <div id="view-all-results" tabindex="0" role="button" aria-label="Exibir todos os resultados das APIs" onkeydown="handleKeyPress(event, 'view-all-results')">
-                Exibir Todos Resultados
-            </div>
-            <div id="mensagem-erro" role="alert" aria-live="assertive"></div>
-        </div>
-
-        <div id="detalhes" role="region" aria-label="Detalhes das consultas às APIs">
-            <h3>Detalhes das APIs:</h3>
-            <div id="detalhe-viacep" class="detalhe-api">
-                <h4>ViaCEP:</h4>
-                <pre id="resultado-viacep"></pre>
-            </div>
-            <div id="detalhe-apicep" class="detalhe-api">
-                <h4>APICEP:</h4>
-                <pre id="resultado-apicep"></pre>
-            </div>
-            <div id="detalhe-brasilapi" class="detalhe-api">
-                <h4>BrasilAPI:</h4>
-                <pre id="resultado-brasilapi"></pre>
-            </div>
-            <div id="detalhe-postmon" class="detalhe-api">
-                <h4>Postmon:</h4>
-                <pre id="resultado-postmon"></pre>
+            <div id="detalhes" class="expandable-section" role="region" aria-label="Detalhes das consultas às APIs">
+                <div class="expandable-content">
+                    <h3>Detalhes das Consultas às APIs:</h3>
+                    <div id="detalhe-viacep" class="api-detail">
+                        <h4><i class="fas fa-server"></i> ViaCEP:</h4>
+                        <pre id="resultado-viacep"></pre>
+                    </div>
+                    <div id="detalhe-apicep" class="api-detail">
+                        <h4><i class="fas fa-server"></i> APICEP:</h4>
+                        <pre id="resultado-apicep"></pre>
+                    </div>
+                    <div id="detalhe-brasilapi" class="api-detail">
+                        <h4><i class="fas fa-server"></i> BrasilAPI:</h4>
+                        <pre id="resultado-brasilapi"></pre>
+                    </div>
+                    <div id="detalhe-postmon" class="api-detail">
+                        <h4><i class="fas fa-server"></i> Postmon:</h4>
+                        <pre id="resultado-postmon"></pre>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="loading-overlay" id="loadingOverlay" role="dialog" aria-label="Carregando resultados">
-        <div class="spinner" aria-hidden="true"></div>
+        <div class="loading-spinner" aria-hidden="true"></div>
         <div class="sr-only">Buscando endereço, por favor aguarde...</div>
     </div>
 
-    <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+    <button id="voltar-topo-btn" class="back-to-top">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div id="toast" class="toast"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Variáveis globais
         let mostrarDetalhesAutomaticamente = false;
         let searchDebounceTimer;
         let cepCache = {};
@@ -536,6 +999,7 @@
         let searchHistory = JSON.parse(localStorage.getItem('cepHistory') || '[]');
         let currentFontSize = 16;
 
+        // APIs com prioridade otimizada
         const apis = [
             {
                 name: 'ViaCEP',
@@ -563,12 +1027,63 @@
             }
         ];
 
+        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             loadSearchHistory();
             setupEventListeners();
             loadAccessibilitySettings();
         });
 
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', currentTheme);
+        updateIcon(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+            showToast('Tema alterado para ' + (newTheme === 'dark' ? 'escuro' : 'claro'));
+        });
+
+        function updateIcon(theme) {
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+            toast.innerHTML = `<i class="${icon}"></i>${message}`;
+            toast.className = `toast show ${type}`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Back to top functionality
+        const backToTopBtn = document.getElementById('voltar-topo-btn');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.classList.remove('show');
+            }
+        });
+
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Event Listeners
         function setupEventListeners() {
             document.getElementById('cep').addEventListener('input', handleCepInput);
             document.getElementById('cep').addEventListener('keydown', handleCepKeydown);
@@ -576,12 +1091,10 @@
             document.getElementById('copyResult').addEventListener('click', copyFullResult);
             document.getElementById('clearHistory').addEventListener('click', clearSearchHistory);
             document.getElementById('view-all-results').addEventListener('click', showAllResults);
-            document.getElementById('toggleContrast').addEventListener('click', toggleHighContrast);
-            document.getElementById('increaseFontSize').addEventListener('click', () => changeFontSize(2));
-            document.getElementById('decreaseFontSize').addEventListener('click', () => changeFontSize(-2));
             document.addEventListener('keydown', handleGlobalKeyDown);
         }
 
+        // CEP formatting and validation
         function handleCepInput(event) {
             let value = event.target.value.replace(/\D/g, '');
             if (value.length <= 8) {
@@ -591,7 +1104,7 @@
                 event.target.value = value;
                 const feedback = document.getElementById('cep-feedback');
                 if (value.replace(/\D/g, '').length === 8) {
-                    feedback.textContent = '✓';
+                    feedback.innerHTML = '<i class="fas fa-check"></i>';
                     feedback.style.color = 'var(--success-color)';
                 } else {
                     feedback.textContent = '';
@@ -609,6 +1122,7 @@
             }
         }
 
+        // Debounce para busca
         function debounce(func, wait) {
             return function executedFunction(...args) {
                 const later = () => {
@@ -620,6 +1134,7 @@
             };
         }
 
+        // Cache management
         function getCacheKey(cep) {
             return `cep_${cep}`;
         }
@@ -641,6 +1156,7 @@
             };
         }
 
+        // History management
         function addToHistory(cep, address) {
             const historyItem = {
                 cep: cep,
@@ -659,24 +1175,38 @@
         function loadSearchHistory() {
             const historyList = document.getElementById('historyList');
             const historySection = document.getElementById('historySection');
+            
             if (searchHistory.length === 0) {
-                historySection.style.display = 'none';
+                historySection.classList.remove('show');
                 return;
             }
-            historySection.style.display = 'block';
+            
+            historySection.classList.add('show');
             historyList.innerHTML = '';
+            
             searchHistory.forEach((item, index) => {
                 const historyItem = document.createElement('div');
                 historyItem.className = 'history-item';
                 historyItem.setAttribute('role', 'listitem');
                 historyItem.setAttribute('tabindex', '0');
                 historyItem.setAttribute('aria-label', `CEP ${item.cep} - ${item.address}`);
+                
                 historyItem.innerHTML = `
-                    <span onclick="loadFromHistory('${item.cep}')" onkeydown="handleKeyPress(event, 'loadFromHistory', '${item.cep}')">
-                        <strong>${item.cep}</strong> - ${item.address}
-                    </span>
-                    <button onclick="removeFromHistory(${index})" aria-label="Remover do histórico">❌</button>
+                    <div class="history-item-info">
+                        <strong>${item.cep}</strong><br>
+                        <small>${item.address}</small><br>
+                        <small style="opacity: 0.7;">${new Date(item.timestamp).toLocaleString()}</small>
+                    </div>
+                    <div class="history-item-actions">
+                        <button class="history-btn" onclick="loadFromHistory('${item.cep}')" aria-label="Carregar CEP ${item.cep}">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="history-btn danger" onclick="removeFromHistory(${index})" aria-label="Remover do histórico">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 `;
+                
                 historyList.appendChild(historyItem);
             });
         }
@@ -685,68 +1215,85 @@
             document.getElementById('cep').value = cep;
             const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
             debouncedSearch(cep.replace(/\D/g, ''));
-        }
+        };
 
         window.removeFromHistory = function(index) {
             searchHistory.splice(index, 1);
             localStorage.setItem('cepHistory', JSON.stringify(searchHistory));
             loadSearchHistory();
             showToast('Item removido do histórico');
-        }
+        };
 
         function clearSearchHistory() {
-            searchHistory = [];
-            localStorage.removeItem('cepHistory');
-            loadSearchHistory();
-            showToast('Histórico limpo com sucesso');
+            if (searchHistory.length === 0) {
+                showToast('Histórico já está vazio', 'error');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja limpar todo o histórico?')) {
+                searchHistory = [];
+                localStorage.removeItem('cepHistory');
+                loadSearchHistory();
+                showToast('Histórico limpo com sucesso!');
+            }
         }
 
+        // Main search function
         async function fetchEnderecoFromAPIs(cep) {
             limparResultado();
+            
+            // Check cache first
             const cachedResult = getCachedResult(cep);
             if (cachedResult) {
                 displayResult(cachedResult);
                 showToast('Resultado carregado do cache');
                 return;
             }
-            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            document.getElementById('loadingOverlay').classList.add('show');
+            
             const sortedApis = [...apis].sort((a, b) => a.priority - b.priority);
             let mainData = null;
             let apisEncontradas = [];
-            let firstValidApi = null;
+            
             for (let api of sortedApis) {
                 try {
                     const response = await fetch(api.url(cep));
                     if (!response.ok) throw new Error(`Erro ${response.status}`);
+                    
                     const data = await response.json();
+                    
                     if (data.erro) {
                         api.resultElement().textContent = `CEP não encontrado na API ${api.name}.`;
                         continue;
                     }
+                    
                     api.resultElement().textContent = JSON.stringify(data, null, 2);
                     apisEncontradas.push(api.name);
+                    
                     if (!mainData) {
                         mainData = data;
-                        firstValidApi = api.name;
-                        if (api.priority === 1) {
-                            break;
-                        }
+                        if (api.priority === 1) break; // Stop at highest priority success
                     }
                 } catch (error) {
                     api.resultElement().textContent = `Erro ao consultar ${api.name}: ${error.message}`;
                 }
             }
-            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            document.getElementById('loadingOverlay').classList.remove('show');
+            
             if (mainData) {
                 displayResult(mainData, apisEncontradas);
                 setCachedResult(cep, { mainData, apisEncontradas });
+                
                 const addressString = `${mainData.logradouro || mainData.street || ''}, ${mainData.bairro || mainData.neighborhood || ''}, ${mainData.localidade || mainData.city || ''}`;
                 addToHistory(cep, addressString);
+                
                 showToast('Endereço encontrado com sucesso!');
             } else {
                 document.getElementById('mensagem-erro').textContent = 'CEP não localizado em nenhuma das APIs.';
-                document.getElementById('mensagem-erro').style.display = 'block';
-                document.getElementById('detalhes').style.display = 'block';
+                document.getElementById('mensagem-erro').classList.add('show');
+                document.getElementById('detalhes').classList.add('show');
                 showToast('CEP não encontrado', 'error');
             }
         }
@@ -754,39 +1301,44 @@
         function displayResult(data, apisEncontradas = []) {
             const mainData = data.mainData || data;
             const apis = data.apisEncontradas || apisEncontradas;
-            document.getElementById('logradouro').textContent = `Logradouro: ${mainData.logradouro || mainData.street || 'N/A'}`;
-            document.getElementById('bairro').textContent = `Bairro: ${mainData.bairro || mainData.neighborhood || 'N/A'}`;
-            document.getElementById('cidade').textContent = `Cidade: ${mainData.localidade || mainData.city || 'N/A'}`;
-            document.getElementById('estado').textContent = `Estado: ${mainData.uf || mainData.state || 'N/A'}`;
-            document.querySelector('.resultado-header').style.display = 'flex';
-            document.getElementById('logradouro-item').style.display = 'flex';
-            document.getElementById('bairro-item').style.display = 'flex';
-            document.getElementById('cidade-item').style.display = 'flex';
-            document.getElementById('estado-item').style.display = 'flex';
+            
+            document.getElementById('logradouro').innerHTML = `<strong>Logradouro:</strong> ${mainData.logradouro || mainData.street || 'N/A'}`;
+            document.getElementById('bairro').innerHTML = `<strong>Bairro:</strong> ${mainData.bairro || mainData.neighborhood || 'N/A'}`;
+            document.getElementById('cidade').innerHTML = `<strong>Cidade:</strong> ${mainData.localidade || mainData.city || 'N/A'}`;
+            document.getElementById('estado').innerHTML = `<strong>Estado:</strong> ${mainData.uf || mainData.state || 'N/A'}`;
+            
+            document.getElementById('resultado').classList.add('show');
+            document.getElementById('view-all-results').classList.add('show');
+            
             if (apis.length > 1) {
-                document.getElementById('view-all-results').style.display = 'block';
-                document.getElementById('alerta-apis').textContent = `Este CEP foi encontrado nas seguintes APIs: ${apis.join(', ')}`;
+                document.getElementById('alerta-apis').innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    Este CEP foi encontrado nas seguintes APIs: <strong>${apis.join(', ')}</strong>
+                `;
+                document.getElementById('alerta-apis').classList.add('show');
             }
+            
             loadMap(mainData);
+            
             if (mostrarDetalhesAutomaticamente) {
-                document.getElementById('detalhes').style.display = 'block';
+                document.getElementById('detalhes').classList.add('show');
             }
         }
 
-        // ----------- MELHORIA: MAPA PRECISO COM NOMINATIM -----------
+        // Map functionality with Nominatim geocoding
         async function getCoordinatesFromAddress(address) {
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
             try {
                 const response = await fetch(url, {
-                    headers: {
-                        'Accept-Language': 'pt-BR'
-                    }
+                    headers: { 'Accept-Language': 'pt-BR' }
                 });
                 const data = await response.json();
                 if (data && data.length > 0) {
                     return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('Geocoding error:', e);
+            }
             return null;
         }
 
@@ -796,45 +1348,59 @@
             const cidade = data.localidade || data.city || '';
             const estado = data.uf || data.state || '';
             const cep = data.cep || '';
+            
             const address = `${logradouro}, ${bairro}, ${cidade}, ${estado}, ${cep}`;
+            
             if (currentMap) {
                 currentMap.remove();
                 currentMap = null;
             }
+            
             let coordinates = await getCoordinatesFromAddress(address);
             if (!coordinates) {
                 coordinates = await getCoordinatesFromAddress(`${cidade}, ${estado}`);
             }
             if (!coordinates) {
-                coordinates = [-15.7942, -47.8822]; // Brasília
+                coordinates = [-15.7942, -47.8822]; // Brasília fallback
             }
+            
             document.getElementById('map').style.display = 'block';
+            
             currentMap = L.map('map').setView(coordinates, 16);
+            
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(currentMap);
-            L.marker(coordinates).addTo(currentMap)
-                .bindPopup(address)
-                .openPopup();
+            
+            const marker = L.marker(coordinates).addTo(currentMap);
+            marker.bindPopup(`
+                <div style="text-align: center;">
+                    <strong style="color: #333;">${address}</strong><br>
+                    <small style="color: #666;">Localização aproximada</small>
+                </div>
+            `).openPopup();
         }
-        // ------------------------------------------------------------
 
+        // Copy functionality
         window.copyToClipboard = function(elementId) {
             const element = document.getElementById(elementId);
-            const text = element.textContent;
+            const text = element.textContent.replace(/^[^:]+:\s*/, ''); // Remove label
+            
             navigator.clipboard.writeText(text).then(() => {
-                showToast('Texto copiado para a área de transferência!');
+                showToast('Texto copiado!');
             }).catch(() => {
                 showToast('Erro ao copiar texto', 'error');
             });
-        }
+        };
 
         function copyFullResult() {
-            const logradouro = document.getElementById('logradouro').textContent;
-            const bairro = document.getElementById('bairro').textContent;
-            const cidade = document.getElementById('cidade').textContent;
-            const estado = document.getElementById('estado').textContent;
+            const logradouro = document.getElementById('logradouro').textContent.replace(/^[^:]+:\s*/, '');
+            const bairro = document.getElementById('bairro').textContent.replace(/^[^:]+:\s*/, '');
+            const cidade = document.getElementById('cidade').textContent.replace(/^[^:]+:\s*/, '');
+            const estado = document.getElementById('estado').textContent.replace(/^[^:]+:\s*/, '');
+            
             const fullAddress = `${logradouro}\n${bairro}\n${cidade}\n${estado}`;
+            
             navigator.clipboard.writeText(fullAddress).then(() => {
                 showToast('Endereço completo copiado!');
             }).catch(() => {
@@ -842,43 +1408,16 @@
             });
         }
 
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
-        }
-
-        function toggleHighContrast() {
-            document.body.classList.toggle('high-contrast');
-            localStorage.setItem('highContrast', document.body.classList.contains('high-contrast'));
-            showToast('Modo de alto contraste ' + (document.body.classList.contains('high-contrast') ? 'ativado' : 'desativado'));
-        }
-
-        function changeFontSize(change) {
-            currentFontSize += change;
-            if (currentFontSize < 12) currentFontSize = 12;
-            if (currentFontSize > 24) currentFontSize = 24;
-            document.body.style.fontSize = currentFontSize + 'px';
-            localStorage.setItem('fontSize', currentFontSize);
-            showToast(`Tamanho da fonte: ${currentFontSize}px`);
-        }
-
+        // Accessibility settings
         function loadAccessibilitySettings() {
-            const highContrast = localStorage.getItem('highContrast') === 'true';
             const fontSize = localStorage.getItem('fontSize');
-            if (highContrast) {
-                document.body.classList.add('high-contrast');
-            }
             if (fontSize) {
                 currentFontSize = parseInt(fontSize);
                 document.body.style.fontSize = currentFontSize + 'px';
             }
         }
 
+        // Keyboard navigation
         function handleGlobalKeyDown(event) {
             if (event.ctrlKey && event.key === 'k') {
                 event.preventDefault();
@@ -891,39 +1430,21 @@
             }
         }
 
-        window.handleKeyPress = function(event, action, param) {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                switch (action) {
-                    case 'view-all-results':
-                        showAllResults();
-                        break;
-                    case 'loadFromHistory':
-                        loadFromHistory(param);
-                        break;
-                }
-            }
-        }
-
+        // Utility functions
         function limparResultado() {
-            document.getElementById('logradouro').textContent = '';
-            document.getElementById('bairro').textContent = '';
-            document.getElementById('cidade').textContent = '';
-            document.getElementById('estado').textContent = '';
-            document.getElementById('alerta-apis').textContent = '';
-            document.getElementById('mensagem-erro').style.display = 'none';
+            document.getElementById('resultado').classList.remove('show');
+            document.getElementById('mensagem-erro').classList.remove('show');
+            document.getElementById('alerta-apis').classList.remove('show');
+            document.getElementById('detalhes').classList.remove('show');
+            document.getElementById('view-all-results').classList.remove('show');
+            document.getElementById('map').style.display = 'none';
+            
+            // Clear API results
             document.getElementById('resultado-viacep').textContent = '';
             document.getElementById('resultado-apicep').textContent = '';
             document.getElementById('resultado-brasilapi').textContent = '';
             document.getElementById('resultado-postmon').textContent = '';
-            document.getElementById('detalhes').style.display = 'none';
-            document.getElementById('view-all-results').style.display = 'none';
-            document.getElementById('map').style.display = 'none';
-            document.querySelector('.resultado-header').style.display = 'none';
-            document.getElementById('logradouro-item').style.display = 'none';
-            document.getElementById('bairro-item').style.display = 'none';
-            document.getElementById('cidade-item').style.display = 'none';
-            document.getElementById('estado-item').style.display = 'none';
+            
             if (currentMap) {
                 currentMap.remove();
                 currentMap = null;
@@ -932,20 +1453,25 @@
 
         function showAllResults() {
             mostrarDetalhesAutomaticamente = true;
-            document.getElementById('detalhes').style.display = 'block';
-            document.getElementById('view-all-results').style.display = 'none';
+            document.getElementById('detalhes').classList.add('show');
+            showToast('Detalhes das APIs exibidos');
         }
 
         function handleFormSubmit(event) {
             event.preventDefault();
             const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            
             if (cep.length !== 8) {
                 showToast('Por favor, insira um CEP válido com 8 dígitos.', 'error');
                 return;
             }
+            
             const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
             debouncedSearch(cep);
         }
+
+        // Load history on page load
+        loadSearchHistory();
     </script>
 </body>
 </html>
