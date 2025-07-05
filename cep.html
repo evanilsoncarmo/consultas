@@ -3,1112 +3,948 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de CNPJ - Hub de Pesquisas</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Buscar Endereço pelo CEP - Versão Aprimorada</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --warning-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-            --background-light: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --background-dark: linear-gradient(135deg, #232526 0%, #414345 100%);
-            --glass-bg: rgba(255, 255, 255, 0.15);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --text-light: #ffffff;
-            --text-dark: #2d3748;
-            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
-            --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.3);
-            --blur: blur(4px);
-            --error-color: #ff6b6b;
-            --success-color: #4ecdc4;
+            --primary-color: #0984e3;
+            --primary-hover: #074ea8;
+            --secondary-color: #74b9ff;
+            --success-color: #27ae60;
+            --success-hover: #219150;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-gray: #f0f0f0;
+            --dark-gray: #333;
+            --white: #fff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
-        [data-theme="dark"] {
-            --glass-bg: rgba(0, 0, 0, 0.25);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-light: #ffffff;
-            --shadow-light: var(--shadow-dark);
+        .high-contrast {
+            --primary-color: #000;
+            --primary-hover: #333;
+            --secondary-color: #000;
+            --success-color: #000;
+            --success-hover: #333;
+            --danger-color: #000;
+            --warning-color: #000;
+            --light-gray: #fff;
+            --dark-gray: #000;
+            --white: #fff;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .high-contrast body {
+            background: #fff !important;
+            color: #000 !important;
+        }
+
+        .high-contrast .container {
+            background-color: #fff !important;
+            border: 3px solid #000 !important;
+            color: #000 !important;
+        }
+
+        .high-contrast input, .high-contrast button {
+            border: 2px solid #000 !important;
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+
+        .high-contrast button {
+            background-color: #000 !important;
+            color: #fff !important;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--background-light);
-            background-attachment: fixed;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: var(--dark-gray);
             position: relative;
-            overflow-x: hidden;
+        }
+
+        .accessibility-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            display: flex;
+            gap: 10px;
+        }
+
+        .accessibility-btn {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
             transition: all 0.3s ease;
         }
 
-        [data-theme="dark"] body {
-            background: var(--background-dark);
+        .accessibility-btn:hover,
+        .accessibility-btn:focus {
+            background: var(--primary-hover);
+            outline: 2px solid var(--warning-color);
         }
 
-        /* Animated background elements */
-        .bg-animation {
+        .container {
+            background-color: var(--white);
+            padding: 25px 30px;
+            box-shadow: var(--shadow);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(9, 132, 227, 0.2);
+        }
+
+        .input-feedback {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: var(--success-color);
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        button:hover,
+        button:focus {
+            background-color: var(--primary-hover);
+            outline: 2px solid var(--warning-color);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .copy-btn {
+            background-color: var(--success-color);
+            font-size: 14px;
+            padding: 8px 16px;
+            min-width: auto;
+        }
+
+        .copy-btn:hover,
+        .copy-btn:focus {
+            background-color: var(--success-hover);
+        }
+
+        .history-section {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background-color: var(--light-gray);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .history-item:hover,
+        .history-item:focus {
+            background-color: #e0e0e0;
+            outline: 2px solid var(--primary-color);
+        }
+
+        .history-item button {
+            background: var(--danger-color);
+            color: var(--white);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            min-width: auto;
+        }
+
+        #resultado {
+            margin-top: 30px;
+            text-align: left;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .resultado-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .resultado-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .resultado-item:last-child {
+            border-bottom: none;
+        }
+
+        #map {
+            height: 300px;
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #detalhes {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .detalhe-api {
+            background-color: var(--light-gray);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .detalhe-api h4 {
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
+        }
+
+        .detalhe-api pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+
+        .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .bg-animation::before,
-        .bg-animation::after {
-            content: '';
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .bg-animation::before {
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .bg-animation::after {
-            bottom: 10%;
-            right: 10%;
-            animation-delay: 3s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-
-        /* Header controls */
-        .header-controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
             z-index: 1000;
-            display: flex;
-            gap: 10px;
-        }
-
-        .control-btn {
-            background: var(--glass-bg);
-            backdrop-filter: var(--blur);
-            border: 1px solid var(--glass-border);
-            border-radius: 50px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--text-light);
-            font-size: 16px;
-            text-decoration: none;
-        }
-
-        .control-btn:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Main container */
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding-top: 80px;
-        }
-
-        .main-card {
-            background: var(--glass-bg);
-            backdrop-filter: var(--blur);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: var(--shadow-light);
-            margin-bottom: 30px;
-            animation: slideUp 0.8s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Header section */
-        .page-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .page-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--secondary-gradient);
-            border-radius: 20px;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: white;
-            box-shadow: 0 10px 25px rgba(240, 147, 251, 0.3);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        h1 {
-            color: var(--text-light);
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Form styling */
-        .form-container {
-            margin-bottom: 30px;
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            color: var(--text-light);
-            font-weight: 500;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .modern-input {
-            width: 100%;
-            padding: 16px 20px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-light);
-            font-size: 16px;
-            font-family: 'Inter', sans-serif;
-            backdrop-filter: var(--blur);
-            transition: all 0.3s ease;
-        }
-
-        .modern-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .modern-input:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
-        }
-
-        .modern-btn {
-            background: var(--secondary-gradient);
-            border: none;
-            border-radius: 16px;
-            padding: 16px 32px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .modern-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(240, 147, 251, 0.4);
-        }
-
-        .modern-btn:active {
-            transform: translateY(0);
-        }
-
-        /* Loading state */
-        .loading {
             display: none;
-            text-align: center;
-            color: var(--text-light);
-            margin: 20px 0;
+            justify-content: center;
+            align-items: center;
         }
 
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+        .loading-overlay .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary-color);
             border-radius: 50%;
-            border-top-color: white;
+            width: 60px;
+            height: 60px;
             animation: spin 1s linear infinite;
-            margin-right: 10px;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        /* Result sections */
-        .result-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            display: none;
-        }
-
-        .result-section.show {
-            display: block;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result-section h2 {
-            color: var(--text-light);
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .result-item {
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 12px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .result-item strong {
-            color: var(--text-light);
-            font-weight: 600;
-        }
-
-        /* Socios section */
-        .socios-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .socios-list li {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Action buttons */
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 30px 0;
-        }
-
-        .action-btn {
-            background: var(--primary-gradient);
-            border: none;
-            border-radius: 12px;
-            padding: 12px 20px;
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: none;
-        }
-
-        .action-btn.show {
-            display: inline-block;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        /* Expandable sections */
-        .expandable-section {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            margin: 20px 0;
-            overflow: hidden;
-            display: none;
-        }
-
-        .expandable-section.show {
-            display: block;
-        }
-
-        .expandable-content {
-            padding: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .expandable-content pre {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 12px;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 12px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-        }
-
-        /* Error messages */
-        .error-message {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin: 20px 0;
-            display: none;
-            font-weight: 500;
-        }
-
-        .error-message.show {
-            display: block;
-            animation: shake 0.5s ease-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        /* Back to top button */
-        .back-to-top {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 50px;
-            height: 50px;
-            background: var(--secondary-gradient);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
-            transition: all 0.3s ease;
-            opacity: 0;
-            visibility: hidden;
-            z-index: 1000;
-        }
-
-        .back-to-top.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .back-to-top:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(240, 147, 251, 0.6);
-        }
-
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .container {
-                padding-top: 120px;
-            }
-
-            .main-card {
-                padding: 25px 20px;
-                margin: 10px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .page-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 28px;
-            }
-
-            .header-controls {
-                top: 15px;
-                right: 15px;
-                flex-direction: column;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .action-btn {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .main-card {
-                margin: 5px;
-                padding: 20px 15px;
-            }
-
-            .modern-input {
-                padding: 14px 16px;
-                font-size: 14px;
-            }
-
-            .modern-btn {
-                padding: 14px 24px;
-                font-size: 14px;
-            }
-        }
-
-        /* Toast notifications */
         .toast {
             position: fixed;
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--success-gradient);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            right: 20px;
+            background: var(--success-color);
+            color: var(--white);
+            padding: 12px 20px;
+            border-radius: 5px;
+            z-index: 1002;
+            display: none;
+            animation: slideIn 0.3s ease;
         }
 
-        .toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(10px);
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
-        .toast.error {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        *:focus {
+            outline: 2px solid var(--warning-color);
+            outline-offset: 2px;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 8px;
+            text-decoration: none;
+            z-index: 1003;
+            border-radius: 4px;
+        }
+
+        .skip-link:focus {
+            top: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .buttons-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .accessibility-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+
+            .resultado-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .resultado-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="bg-animation"></div>
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
     
-    <div class="header-controls">
-        <a href="index.html" class="control-btn" title="Voltar ao início">
-            <i class="fas fa-home"></i>
-        </a>
-        <button class="control-btn" id="themeToggle" title="Alternar tema">
-            <i class="fas fa-moon"></i>
+    <div class="accessibility-controls">
+        <button class="accessibility-btn" id="toggleContrast" aria-label="Alternar modo de alto contraste">
+            Alto Contraste
+        </button>
+        <button class="accessibility-btn" id="increaseFontSize" aria-label="Aumentar tamanho da fonte">
+            A+
+        </button>
+        <button class="accessibility-btn" id="decreaseFontSize" aria-label="Diminuir tamanho da fonte">
+            A-
         </button>
     </div>
 
-    <div class="container">
-        <div class="main-card">
-            <div class="page-header">
-                <div class="page-icon">
-                    <i class="fas fa-building"></i>
+    <div class="container" id="main-content">
+        <h1>Buscar Endereço pelo CEP</h1>
+        
+        <form id="cepForm" role="form" aria-label="Formulário de busca de CEP">
+            <div class="form-group">
+                <div class="input-wrapper">
+                    <label for="cep" class="sr-only">Digite o CEP</label>
+                    <input 
+                        type="text" 
+                        id="cep" 
+                        name="cep" 
+                        placeholder="00000-000" 
+                        maxlength="9"
+                        aria-describedby="cep-help"
+                        aria-required="true"
+                        autocomplete="postal-code"
+                        required
+                    >
+                    <div class="input-feedback" id="cep-feedback" aria-live="polite"></div>
                 </div>
-                <h1>Consulta de CNPJ</h1>
-                <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; font-weight: 300;">
-                    Consulte informações detalhadas de empresas
-                </p>
-            </div>
-
-            <form id="cnpjForm" class="form-container">
-                <div class="input-group">
-                    <label for="cnpj">CNPJ da Empresa</label>
-                    <input type="text" id="cnpj" name="cnpj" class="modern-input" 
-                           placeholder="Digite o CNPJ (apenas números)" required autocomplete="on">
-                </div>
-                <button type="submit" class="modern-btn">
-                    <i class="fas fa-search" style="margin-right: 8px;"></i>
-                    Consultar CNPJ
-                </button>
-            </form>
-
-            <div id="mensagem-carregamento" class="loading">
-                <div class="spinner"></div>
-                Consultando APIs, aguarde...
-            </div>
-
-            <div id="mensagem-erro" class="error-message"></div>
-
-            <div id="resultado" class="result-section">
-                <h2>
-                    <i class="fas fa-info-circle"></i>
-                    Detalhes da Empresa
-                </h2>
-                <div id="nome" class="result-item"></div>
-                <div id="fantasia" class="result-item"></div>
-                <div id="situacao" class="result-item"></div>
-                <div id="atividade_principal" class="result-item"></div>
-                <div id="endereco" class="result-item"></div>
-                <div id="telefone" class="result-item"></div>
-                <div id="email" class="result-item"></div>
-                <div id="capital_social" class="result-item"></div>
-                <div id="natureza_juridica" class="result-item"></div>
-                <div id="qualificacao_responsavel" class="result-item"></div>
+                <div id="cep-help" class="sr-only">Digite um CEP válido no formato 00000-000</div>
                 
-                <div class="socios" id="socios">
-                    <h3 style="color: var(--text-light); margin: 20px 0 15px 0; font-weight: 600;">
-                        <i class="fas fa-users" style="margin-right: 8px;"></i>
-                        Sócios:
-                    </h3>
-                    <ul id="lista-socios" class="socios-list"></ul>
+                <div class="buttons-container">
+                    <button type="submit" aria-describedby="buscar-help">
+                        Buscar Endereço
+                    </button>
+                    <button type="button" id="clearHistory" aria-label="Limpar histórico de buscas">
+                        Limpar Histórico
+                    </button>
                 </div>
+                <div id="buscar-help" class="sr-only">Clique para buscar o endereço do CEP informado</div>
             </div>
+        </form>
 
-            <div class="action-buttons">
-                <button id="mostrar-json-btn" class="action-btn">
-                    <i class="fas fa-code"></i> JSON Bruto
-                </button>
-                <button id="mostrar-dados-completos-btn" class="action-btn">
-                    <i class="fas fa-database"></i> Dados Completos
-                </button>
-                <button id="historico-btn" class="action-btn">
-                    <i class="fas fa-history"></i> Histórico
-                </button>
-                <button id="exportar-historico-btn" class="action-btn">
-                    <i class="fas fa-download"></i> Exportar
-                </button>
-                <button id="limpar-historico-btn" class="action-btn">
-                    <i class="fas fa-trash"></i> Limpar Histórico
+        <div class="history-section" id="historySection" style="display: none;">
+            <h3>Histórico de Buscas</h3>
+            <div id="historyList" role="list" aria-label="Lista de CEPs buscados anteriormente"></div>
+        </div>
+
+        <div id="resultado" role="region" aria-label="Resultado da busca" aria-live="polite">
+            <div class="resultado-header" style="display: none;">
+                <h2>Endereço Encontrado:</h2>
+                <button class="copy-btn" id="copyResult" aria-label="Copiar endereço completo">
+                    📋 Copiar
                 </button>
             </div>
-
-            <div id="json-bruto" class="expandable-section">
-                <div class="expandable-content">
-                    <h3 style="color: var(--text-light); margin-bottom: 15px;">JSON Bruto:</h3>
-                    <pre id="json-content"></pre>
-                </div>
+            
+            <div class="resultado-item" id="logradouro-item" style="display: none;">
+                <span id="logradouro"></span>
+                <button class="copy-btn" onclick="copyToClipboard('logradouro')" aria-label="Copiar logradouro">📋</button>
+            </div>
+            
+            <div class="resultado-item" id="bairro-item" style="display: none;">
+                <span id="bairro"></span>
+                <button class="copy-btn" onclick="copyToClipboard('bairro')" aria-label="Copiar bairro">📋</button>
+            </div>
+            
+            <div class="resultado-item" id="cidade-item" style="display: none;">
+                <span id="cidade"></span>
+                <button class="copy-btn" onclick="copyToClipboard('cidade')" aria-label="Copiar cidade">📋</button>
+            </div>
+            
+            <div class="resultado-item" id="estado-item" style="display: none;">
+                <span id="estado"></span>
+                <button class="copy-btn" onclick="copyToClipboard('estado')" aria-label="Copiar estado">📋</button>
             </div>
 
-            <div id="dados-completos" class="expandable-section">
-                <div class="expandable-content">
-                    <h3 style="color: var(--text-light); margin-bottom: 15px;">Dados Completos das APIs:</h3>
-                    <div id="dados-completos-content"></div>
-                </div>
+            <div id="map" aria-label="Mapa com a localização do endereço"></div>
+            
+            <div id="alerta-apis" role="status" aria-live="polite"></div>
+            <div id="view-all-results" tabindex="0" role="button" aria-label="Exibir todos os resultados das APIs" onkeydown="handleKeyPress(event, 'view-all-results')">
+                Exibir Todos Resultados
             </div>
+            <div id="mensagem-erro" role="alert" aria-live="assertive"></div>
+        </div>
 
-            <div id="historico-container" class="expandable-section">
-                <div class="expandable-content">
-                    <h3 style="color: var(--text-light); margin-bottom: 15px;">Histórico de Consultas:</h3>
-                    <div id="historico-list"></div>
-                </div>
+        <div id="detalhes" role="region" aria-label="Detalhes das consultas às APIs">
+            <h3>Detalhes das APIs:</h3>
+            <div id="detalhe-viacep" class="detalhe-api">
+                <h4>ViaCEP:</h4>
+                <pre id="resultado-viacep"></pre>
+            </div>
+            <div id="detalhe-apicep" class="detalhe-api">
+                <h4>APICEP:</h4>
+                <pre id="resultado-apicep"></pre>
+            </div>
+            <div id="detalhe-brasilapi" class="detalhe-api">
+                <h4>BrasilAPI:</h4>
+                <pre id="resultado-brasilapi"></pre>
+            </div>
+            <div id="detalhe-postmon" class="detalhe-api">
+                <h4>Postmon:</h4>
+                <pre id="resultado-postmon"></pre>
             </div>
         </div>
     </div>
 
-    <button id="voltar-topo-btn" class="back-to-top">
-        <i class="fas fa-chevron-up"></i>
-    </button>
+    <div class="loading-overlay" id="loadingOverlay" role="dialog" aria-label="Carregando resultados">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="sr-only">Buscando endereço, por favor aguarde...</div>
+    </div>
 
-    <div id="toast" class="toast"></div>
+    <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Carregar o token de configuração
-        let apiTokenReceitaWS = 'your-token-here'; // Substitua pelo seu token
+        let mostrarDetalhesAutomaticamente = false;
+        let searchDebounceTimer;
+        let cepCache = {};
+        let currentMap = null;
+        let searchHistory = JSON.parse(localStorage.getItem('cepHistory') || '[]');
+        let currentFontSize = 16;
 
-        // Theme toggle functionality
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        const icon = themeToggle.querySelector('i');
+        const apis = [
+            {
+                name: 'ViaCEP',
+                url: (cep) => `https://viacep.com.br/ws/${cep}/json/`,
+                priority: 1,
+                resultElement: () => document.getElementById('resultado-viacep')
+            },
+            {
+                name: 'BrasilAPI',
+                url: (cep) => `https://brasilapi.com.br/api/cep/v1/${cep}`,
+                priority: 2,
+                resultElement: () => document.getElementById('resultado-brasilapi')
+            },
+            {
+                name: 'APICEP',
+                url: (cep) => `https://ws.apicep.com/cep/${cep}.json`,
+                priority: 3,
+                resultElement: () => document.getElementById('resultado-apicep')
+            },
+            {
+                name: 'Postmon',
+                url: (cep) => `https://api.postmon.com.br/v1/cep/${cep}`,
+                priority: 4,
+                resultElement: () => document.getElementById('resultado-postmon')
+            }
+        ];
 
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        body.setAttribute('data-theme', currentTheme);
-        updateIcon(currentTheme);
-
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateIcon(newTheme);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSearchHistory();
+            setupEventListeners();
+            loadAccessibilitySettings();
         });
 
-        function updateIcon(theme) {
-            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        function setupEventListeners() {
+            document.getElementById('cep').addEventListener('input', handleCepInput);
+            document.getElementById('cep').addEventListener('keydown', handleCepKeydown);
+            document.getElementById('cepForm').addEventListener('submit', handleFormSubmit);
+            document.getElementById('copyResult').addEventListener('click', copyFullResult);
+            document.getElementById('clearHistory').addEventListener('click', clearSearchHistory);
+            document.getElementById('view-all-results').addEventListener('click', showAllResults);
+            document.getElementById('toggleContrast').addEventListener('click', toggleHighContrast);
+            document.getElementById('increaseFontSize').addEventListener('click', () => changeFontSize(2));
+            document.getElementById('decreaseFontSize').addEventListener('click', () => changeFontSize(-2));
+            document.addEventListener('keydown', handleGlobalKeyDown);
         }
 
-        // Toast notification
+        function handleCepInput(event) {
+            let value = event.target.value.replace(/\D/g, '');
+            if (value.length <= 8) {
+                if (value.length > 5) {
+                    value = value.substring(0, 5) + '-' + value.substring(5);
+                }
+                event.target.value = value;
+                const feedback = document.getElementById('cep-feedback');
+                if (value.replace(/\D/g, '').length === 8) {
+                    feedback.textContent = '✓';
+                    feedback.style.color = 'var(--success-color)';
+                } else {
+                    feedback.textContent = '';
+                }
+            }
+        }
+
+        function handleCepKeydown(event) {
+            const allowedKeys = [
+                'Backspace', 'Delete', 'Tab', 'Enter', 'Home', 'End',
+                'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'
+            ];
+            if (!allowedKeys.includes(event.key) && !/[0-9]/.test(event.key)) {
+                event.preventDefault();
+            }
+        }
+
+        function debounce(func, wait) {
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(searchDebounceTimer);
+                    func(...args);
+                };
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(later, wait);
+            };
+        }
+
+        function getCacheKey(cep) {
+            return `cep_${cep}`;
+        }
+
+        function getCachedResult(cep) {
+            const cacheKey = getCacheKey(cep);
+            const cached = cepCache[cacheKey];
+            if (cached && Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) {
+                return cached.data;
+            }
+            return null;
+        }
+
+        function setCachedResult(cep, data) {
+            const cacheKey = getCacheKey(cep);
+            cepCache[cacheKey] = {
+                data: data,
+                timestamp: Date.now()
+            };
+        }
+
+        function addToHistory(cep, address) {
+            const historyItem = {
+                cep: cep,
+                address: address,
+                timestamp: Date.now()
+            };
+            searchHistory = searchHistory.filter(item => item.cep !== cep);
+            searchHistory.unshift(historyItem);
+            if (searchHistory.length > 10) {
+                searchHistory = searchHistory.slice(0, 10);
+            }
+            localStorage.setItem('cepHistory', JSON.stringify(searchHistory));
+            loadSearchHistory();
+        }
+
+        function loadSearchHistory() {
+            const historyList = document.getElementById('historyList');
+            const historySection = document.getElementById('historySection');
+            if (searchHistory.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            historySection.style.display = 'block';
+            historyList.innerHTML = '';
+            searchHistory.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.setAttribute('role', 'listitem');
+                historyItem.setAttribute('tabindex', '0');
+                historyItem.setAttribute('aria-label', `CEP ${item.cep} - ${item.address}`);
+                historyItem.innerHTML = `
+                    <span onclick="loadFromHistory('${item.cep}')" onkeydown="handleKeyPress(event, 'loadFromHistory', '${item.cep}')">
+                        <strong>${item.cep}</strong> - ${item.address}
+                    </span>
+                    <button onclick="removeFromHistory(${index})" aria-label="Remover do histórico">❌</button>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        window.loadFromHistory = function(cep) {
+            document.getElementById('cep').value = cep;
+            const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
+            debouncedSearch(cep.replace(/\D/g, ''));
+        }
+
+        window.removeFromHistory = function(index) {
+            searchHistory.splice(index, 1);
+            localStorage.setItem('cepHistory', JSON.stringify(searchHistory));
+            loadSearchHistory();
+            showToast('Item removido do histórico');
+        }
+
+        function clearSearchHistory() {
+            searchHistory = [];
+            localStorage.removeItem('cepHistory');
+            loadSearchHistory();
+            showToast('Histórico limpo com sucesso');
+        }
+
+        async function fetchEnderecoFromAPIs(cep) {
+            limparResultado();
+            const cachedResult = getCachedResult(cep);
+            if (cachedResult) {
+                displayResult(cachedResult);
+                showToast('Resultado carregado do cache');
+                return;
+            }
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            const sortedApis = [...apis].sort((a, b) => a.priority - b.priority);
+            let mainData = null;
+            let apisEncontradas = [];
+            let firstValidApi = null;
+            for (let api of sortedApis) {
+                try {
+                    const response = await fetch(api.url(cep));
+                    if (!response.ok) throw new Error(`Erro ${response.status}`);
+                    const data = await response.json();
+                    if (data.erro) {
+                        api.resultElement().textContent = `CEP não encontrado na API ${api.name}.`;
+                        continue;
+                    }
+                    api.resultElement().textContent = JSON.stringify(data, null, 2);
+                    apisEncontradas.push(api.name);
+                    if (!mainData) {
+                        mainData = data;
+                        firstValidApi = api.name;
+                        if (api.priority === 1) {
+                            break;
+                        }
+                    }
+                } catch (error) {
+                    api.resultElement().textContent = `Erro ao consultar ${api.name}: ${error.message}`;
+                }
+            }
+            document.getElementById('loadingOverlay').style.display = 'none';
+            if (mainData) {
+                displayResult(mainData, apisEncontradas);
+                setCachedResult(cep, { mainData, apisEncontradas });
+                const addressString = `${mainData.logradouro || mainData.street || ''}, ${mainData.bairro || mainData.neighborhood || ''}, ${mainData.localidade || mainData.city || ''}`;
+                addToHistory(cep, addressString);
+                showToast('Endereço encontrado com sucesso!');
+            } else {
+                document.getElementById('mensagem-erro').textContent = 'CEP não localizado em nenhuma das APIs.';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                document.getElementById('detalhes').style.display = 'block';
+                showToast('CEP não encontrado', 'error');
+            }
+        }
+
+        function displayResult(data, apisEncontradas = []) {
+            const mainData = data.mainData || data;
+            const apis = data.apisEncontradas || apisEncontradas;
+            document.getElementById('logradouro').textContent = `Logradouro: ${mainData.logradouro || mainData.street || 'N/A'}`;
+            document.getElementById('bairro').textContent = `Bairro: ${mainData.bairro || mainData.neighborhood || 'N/A'}`;
+            document.getElementById('cidade').textContent = `Cidade: ${mainData.localidade || mainData.city || 'N/A'}`;
+            document.getElementById('estado').textContent = `Estado: ${mainData.uf || mainData.state || 'N/A'}`;
+            document.querySelector('.resultado-header').style.display = 'flex';
+            document.getElementById('logradouro-item').style.display = 'flex';
+            document.getElementById('bairro-item').style.display = 'flex';
+            document.getElementById('cidade-item').style.display = 'flex';
+            document.getElementById('estado-item').style.display = 'flex';
+            if (apis.length > 1) {
+                document.getElementById('view-all-results').style.display = 'block';
+                document.getElementById('alerta-apis').textContent = `Este CEP foi encontrado nas seguintes APIs: ${apis.join(', ')}`;
+            }
+            loadMap(mainData);
+            if (mostrarDetalhesAutomaticamente) {
+                document.getElementById('detalhes').style.display = 'block';
+            }
+        }
+
+        // ----------- MELHORIA: MAPA PRECISO COM NOMINATIM -----------
+        async function getCoordinatesFromAddress(address) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept-Language': 'pt-BR'
+                    }
+                });
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        async function loadMap(data) {
+            const logradouro = data.logradouro || data.street || '';
+            const bairro = data.bairro || data.neighborhood || '';
+            const cidade = data.localidade || data.city || '';
+            const estado = data.uf || data.state || '';
+            const cep = data.cep || '';
+            const address = `${logradouro}, ${bairro}, ${cidade}, ${estado}, ${cep}`;
+            if (currentMap) {
+                currentMap.remove();
+                currentMap = null;
+            }
+            let coordinates = await getCoordinatesFromAddress(address);
+            if (!coordinates) {
+                coordinates = await getCoordinatesFromAddress(`${cidade}, ${estado}`);
+            }
+            if (!coordinates) {
+                coordinates = [-15.7942, -47.8822]; // Brasília
+            }
+            document.getElementById('map').style.display = 'block';
+            currentMap = L.map('map').setView(coordinates, 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(currentMap);
+            L.marker(coordinates).addTo(currentMap)
+                .bindPopup(address)
+                .openPopup();
+        }
+        // ------------------------------------------------------------
+
+        window.copyToClipboard = function(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Texto copiado para a área de transferência!');
+            }).catch(() => {
+                showToast('Erro ao copiar texto', 'error');
+            });
+        }
+
+        function copyFullResult() {
+            const logradouro = document.getElementById('logradouro').textContent;
+            const bairro = document.getElementById('bairro').textContent;
+            const cidade = document.getElementById('cidade').textContent;
+            const estado = document.getElementById('estado').textContent;
+            const fullAddress = `${logradouro}\n${bairro}\n${cidade}\n${estado}`;
+            navigator.clipboard.writeText(fullAddress).then(() => {
+                showToast('Endereço completo copiado!');
+            }).catch(() => {
+                showToast('Erro ao copiar endereço', 'error');
+            });
+        }
+
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
-            toast.className = `toast show ${type}`;
-            
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
             setTimeout(() => {
-                toast.classList.remove('show');
+                toast.style.display = 'none';
             }, 3000);
         }
 
-        // Back to top functionality
-        const backToTopBtn = document.getElementById('voltar-topo-btn');
-        
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 300) {
-                backToTopBtn.classList.add('show');
-            } else {
-                backToTopBtn.classList.remove('show');
-            }
-        });
-
-        backToTopBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-
-        // CNPJ validation and formatting
-        document.getElementById('cnpj').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length <= 14) {
-                // Format CNPJ: XX.XXX.XXX/XXXX-XX
-                value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-                value = value.replace(/(\d{4})(\d)/, '$1-$2');
-                e.target.value = value;
-            }
-        });
-
-        // API URLs and configuration
-        const apiUrlReceitaWS = 'https://www.receitaws.com.br/v1/cnpj/';
-        const apiUrlOpenCNPJ = 'https://opencnpj.com/v1/cnpj/';
-        const historicoConsultas = JSON.parse(localStorage.getItem('historicoConsultas')) || [];
-
-        let apiResults = [];
-
-        // Show history button if there are previous searches
-        if (historicoConsultas.length > 0) {
-            document.getElementById('limpar-historico-btn').classList.add('show');
+        function toggleHighContrast() {
+            document.body.classList.toggle('high-contrast');
+            localStorage.setItem('highContrast', document.body.classList.contains('high-contrast'));
+            showToast('Modo de alto contraste ' + (document.body.classList.contains('high-contrast') ? 'ativado' : 'desativado'));
         }
 
-        // Form submission
-        document.getElementById('cnpjForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        function changeFontSize(change) {
+            currentFontSize += change;
+            if (currentFontSize < 12) currentFontSize = 12;
+            if (currentFontSize > 24) currentFontSize = 24;
+            document.body.style.fontSize = currentFontSize + 'px';
+            localStorage.setItem('fontSize', currentFontSize);
+            showToast(`Tamanho da fonte: ${currentFontSize}px`);
+        }
 
-            const cnpj = document.getElementById('cnpj').value.replace(/\D/g, '');
+        function loadAccessibilitySettings() {
+            const highContrast = localStorage.getItem('highContrast') === 'true';
+            const fontSize = localStorage.getItem('fontSize');
+            if (highContrast) {
+                document.body.classList.add('high-contrast');
+            }
+            if (fontSize) {
+                currentFontSize = parseInt(fontSize);
+                document.body.style.fontSize = currentFontSize + 'px';
+            }
+        }
 
-            if (!validarCNPJ(cnpj)) {
-                showToast('Por favor, insira um CNPJ válido.', 'error');
+        function handleGlobalKeyDown(event) {
+            if (event.ctrlKey && event.key === 'k') {
+                event.preventDefault();
+                document.getElementById('cep').focus();
+            }
+            if (event.key === 'Escape') {
+                limparResultado();
+                document.getElementById('cep').value = '';
+                document.getElementById('cep').focus();
+            }
+        }
+
+        window.handleKeyPress = function(event, action, param) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                switch (action) {
+                    case 'view-all-results':
+                        showAllResults();
+                        break;
+                    case 'loadFromHistory':
+                        loadFromHistory(param);
+                        break;
+                }
+            }
+        }
+
+        function limparResultado() {
+            document.getElementById('logradouro').textContent = '';
+            document.getElementById('bairro').textContent = '';
+            document.getElementById('cidade').textContent = '';
+            document.getElementById('estado').textContent = '';
+            document.getElementById('alerta-apis').textContent = '';
+            document.getElementById('mensagem-erro').style.display = 'none';
+            document.getElementById('resultado-viacep').textContent = '';
+            document.getElementById('resultado-apicep').textContent = '';
+            document.getElementById('resultado-brasilapi').textContent = '';
+            document.getElementById('resultado-postmon').textContent = '';
+            document.getElementById('detalhes').style.display = 'none';
+            document.getElementById('view-all-results').style.display = 'none';
+            document.getElementById('map').style.display = 'none';
+            document.querySelector('.resultado-header').style.display = 'none';
+            document.getElementById('logradouro-item').style.display = 'none';
+            document.getElementById('bairro-item').style.display = 'none';
+            document.getElementById('cidade-item').style.display = 'none';
+            document.getElementById('estado-item').style.display = 'none';
+            if (currentMap) {
+                currentMap.remove();
+                currentMap = null;
+            }
+        }
+
+        function showAllResults() {
+            mostrarDetalhesAutomaticamente = true;
+            document.getElementById('detalhes').style.display = 'block';
+            document.getElementById('view-all-results').style.display = 'none';
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            if (cep.length !== 8) {
+                showToast('Por favor, insira um CEP válido com 8 dígitos.', 'error');
                 return;
             }
-
-            // Show loading
-            document.getElementById('mensagem-carregamento').classList.add('show');
-            
-            // Hide previous results
-            hideAllSections();
-
-            const apis = [
-                `https://brasilapi.com.br/api/cnpj/v1/${cnpj}`,
-                `${apiUrlReceitaWS}${cnpj}?token=${apiTokenReceitaWS}`,
-                `https://publica.cnpj.ws/cnpj/${cnpj}`,
-                `${apiUrlOpenCNPJ}${cnpj}`
-            ];
-
-            try {
-                apiResults = await Promise.all(apis.map(url => 
-                    url.includes('receitaws') ? fetchJSONP(url) : fetchFromAPI(url)
-                ));
-
-                document.getElementById('mensagem-carregamento').classList.remove('show');
-
-                const mergedData = mergeData(apiResults);
-
-                if (Object.keys(mergedData).length === 0) {
-                    document.getElementById('mensagem-erro').textContent = 
-                        'Erro ao consultar o CNPJ em todas as APIs disponíveis.';
-                    document.getElementById('mensagem-erro').classList.add('show');
-                    return;
-                }
-
-                salvarHistoricoConsulta(cnpj, mergedData);
-                exibirResultado(mergedData);
-                exibirHistorico();
-                showToast('Consulta realizada com sucesso!');
-
-                if (historicoConsultas.length > 0) {
-                    document.getElementById('limpar-historico-btn').classList.add('show');
-                }
-            } catch (error) {
-                document.getElementById('mensagem-carregamento').classList.remove('show');
-                showToast('Erro na consulta. Tente novamente.', 'error');
-            }
-        });
-
-        function hideAllSections() {
-            document.getElementById('resultado').classList.remove('show');
-            document.getElementById('mensagem-erro').classList.remove('show');
-            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('show'));
-            document.querySelectorAll('.expandable-section').forEach(section => section.classList.remove('show'));
-        }
-
-        async function fetchFromAPI(url, options = {}) {
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    throw new Error(`Erro na consulta: ${response.status} - ${response.statusText}`);
-                }
-                return await response.json();
-            } catch (error) {
-                console.error(`Erro ao consultar API: ${url}`, error);
-                return null;
-            }
-        }
-
-        function fetchJSONP(url) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                const callbackName = `jsonpCallback_${Math.round(100000 * Math.random())}`;
-
-                window[callbackName] = function (data) {
-                    resolve(data);
-                    document.body.removeChild(script);
-                    delete window[callbackName];
-                };
-
-                script.src = `${url}&callback=${callbackName}`;
-                document.body.appendChild(script);
-            });
-        }
-
-        function mergeData(results) {
-            const mergedData = {};
-
-            for (const result of results) {
-                if (!result) continue;
-
-                mergedData.nome = mergedData.nome || result.razao_social || result.nome || 'Informação não disponível';
-                mergedData.fantasia = mergedData.fantasia || result.fantasia || 'Informação não disponível';
-                mergedData.situacao = mergedData.situacao || result.situacao || 'Informação não disponível';
-                mergedData.atividade_principal = mergedData.atividade_principal ||
-                    (result.atividade_principal ? [{
-                        text: result.atividade_principal[0].text
-                    }] : 'Informação não disponível');
-                mergedData.logradouro = mergedData.logradouro || result.logradouro || 'Informação não disponível';
-                mergedData.numero = mergedData.numero || result.numero || 'S/N';
-                mergedData.bairro = mergedData.bairro || result.bairro || 'Informação não disponível';
-                mergedData.municipio = mergedData.municipio || result.municipio || 'Informação não disponível';
-                mergedData.uf = mergedData.uf || result.uf || 'Informação não disponível';
-                mergedData.cep = mergedData.cep || result.cep || 'Informação não disponível';
-                mergedData.telefone = mergedData.telefone || result.telefone || 'Informação não disponível';
-                mergedData.email = mergedData.email || result.email || 'Informação não disponível';
-                mergedData.capital_social = mergedData.capital_social || result.capital_social || 'Informação não disponível';
-                mergedData.natureza_juridica = mergedData.natureza_juridica || result.natureza_juridica || 'Informação não disponível';
-                mergedData.qualificacao_responsavel = mergedData.qualificacao_responsavel || result.qualificacao_do_responsavel?.descricao || 'Informação não disponível';
-
-                if (result.qsa && result.qsa.length > 0) {
-                    mergedData.socios = result.qsa;
-                } else if (!mergedData.socios) {
-                    mergedData.socios = [];
-                }
-            }
-
-            return mergedData;
-        }
-
-        function exibirResultado(mergedData) {
-            document.getElementById('resultado').classList.add('show');
-            document.getElementById('nome').innerHTML = `<strong>Nome:</strong> ${mergedData.nome}`;
-            document.getElementById('fantasia').innerHTML = `<strong>Nome Fantasia:</strong> ${mergedData.fantasia}`;
-            document.getElementById('situacao').innerHTML = `<strong>Situação:</strong> ${mergedData.situacao}`;
-            document.getElementById('atividade_principal').innerHTML = mergedData.atividade_principal && mergedData.atividade_principal.length > 0 ?
-                `<strong>Atividade Principal:</strong> ${mergedData.atividade_principal[0].text}` :
-                '<strong>Atividade Principal:</strong> Informação não disponível';
-            document.getElementById('endereco').innerHTML = `<strong>Endereço:</strong> ${mergedData.logradouro}, ${mergedData.numero} - ${mergedData.bairro}, ${mergedData.municipio} - ${mergedData.uf}, ${mergedData.cep}`;
-            document.getElementById('telefone').innerHTML = `<strong>Telefone:</strong> ${mergedData.telefone}`;
-            document.getElementById('email').innerHTML = `<strong>Email:</strong> ${mergedData.email}`;
-            document.getElementById('capital_social').innerHTML = `<strong>Capital Social:</strong> ${mergedData.capital_social}`;
-            document.getElementById('natureza_juridica').innerHTML = `<strong>Natureza Jurídica:</strong> ${mergedData.natureza_juridica}`;
-            document.getElementById('qualificacao_responsavel').innerHTML = `<strong>Qualificação do Responsável:</strong> ${mergedData.qualificacao_responsavel}`;
-
-            exibirSocios(mergedData.socios);
-
-            document.getElementById('mensagem-erro').classList.remove('show');
-            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.add('show'));
-            
-            document.getElementById('json-content').textContent = JSON.stringify(mergedData, null, 2);
-            exibirDadosCompletos(apiResults);
-        }
-
-        function exibirSocios(socios) {
-            const listaSocios = document.getElementById('lista-socios');
-            listaSocios.innerHTML = '';
-
-            if (socios && socios.length > 0) {
-                socios.forEach(socio => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<strong>Nome:</strong> ${socio.nome || 'N/A'}<br><strong>Qualificação:</strong> ${socio.qual || 'N/A'}`;
-                    listaSocios.appendChild(li);
-                });
-            } else {
-                const li = document.createElement('li');
-                li.textContent = 'Informação não disponível';
-                listaSocios.appendChild(li);
-            }
-        }
-
-        function exibirDadosCompletos(results) {
-            const container = document.getElementById('dados-completos-content');
-            container.innerHTML = '';
-
-            results.forEach((result, index) => {
-                if (!result) return;
-
-                const apiContainer = document.createElement('div');
-                apiContainer.style.cssText = `
-                    background: rgba(255, 255, 255, 0.1);
-                    padding: 20px;
-                    border-radius: 16px;
-                    margin-bottom: 20px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                `;
-
-                apiContainer.innerHTML = `
-                    <h3 style="color: var(--text-light); margin-bottom: 15px;">API ${index + 1}</h3>
-                    <div style="color: rgba(255, 255, 255, 0.9); line-height: 1.6;">
-                        <p><strong>CNPJ Raiz:</strong> ${result.cnpj_raiz || result.cnpj || 'N/A'}</p>
-                        <p><strong>Razão Social:</strong> ${result.razao_social || result.nome || 'N/A'}</p>
-                        <p><strong>Capital Social:</strong> ${result.capital_social || 'N/A'}</p>
-                        <p><strong>Porte:</strong> ${result.porte || 'N/A'}</p>
-                        <p><strong>Natureza Jurídica:</strong> ${result.natureza_juridica || 'N/A'}</p>
-                        <p><strong>Qualificação do Responsável:</strong> ${result.qualificacao_do_responsavel?.descricao || 'N/A'}</p>
-                        <p><strong>Simples Nacional:</strong> ${result.simples?.simples || 'N/A'} (MEI: ${result.simples?.mei || 'N/A'})</p>
-                        <p><strong>Atividade Principal:</strong> ${result.atividade_principal?.[0]?.text || 'N/A'}</p>
-                        <p><strong>Endereço:</strong> ${result.logradouro || 'N/A'}, ${result.numero || 'N/A'} - ${result.bairro || 'N/A'}, ${result.municipio || 'N/A'} - ${result.uf || 'N/A'}, ${result.cep || 'N/A'}</p>
-                        <p><strong>Telefone:</strong> ${result.telefone || 'N/A'}</p>
-                        <p><strong>Email:</strong> ${result.email || 'N/A'}</p>
-                        <h4 style="color: var(--text-light); margin: 15px 0 10px 0;">Sócios</h4>
-                        <ul style="list-style: none; padding: 0;">
-                            ${result.qsa?.map(socio => `
-                                <li style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
-                                    <strong>Nome:</strong> ${socio.nome || 'N/A'}<br>
-                                    <strong>Qualificação:</strong> ${socio.qual || 'N/A'}
-                                </li>
-                            `).join('') || '<li>Informação não disponível</li>'}
-                        </ul>
-                    </div>
-                `;
-
-                container.appendChild(apiContainer);
-            });
-        }
-
-        function salvarHistoricoConsulta(cnpj, data) {
-            historicoConsultas.unshift({
-                cnpj,
-                data,
-                timestamp: new Date().toISOString()
-            });
-            
-            // Limita a 20 itens
-            if (historicoConsultas.length > 20) {
-                historicoConsultas.splice(20);
-            }
-            
-            localStorage.setItem('historicoConsultas', JSON.stringify(historicoConsultas));
-        }
-
-        function exibirHistorico() {
-            const container = document.getElementById('historico-list');
-            container.innerHTML = '';
-
-            if (historicoConsultas.length === 0) {
-                container.innerHTML = '<p style="color: rgba(255, 255, 255, 0.8);">Nenhuma consulta no histórico</p>';
-                return;
-            }
-
-            historicoConsultas.forEach((item, index) => {
-                const historyItem = document.createElement('div');
-                historyItem.style.cssText = `
-                    background: rgba(255, 255, 255, 0.1);
-                    padding: 15px;
-                    border-radius: 12px;
-                    margin-bottom: 10px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                `;
-                
-                historyItem.innerHTML = `
-                    <div>
-                        <strong style="color: var(--text-light);">CNPJ:</strong> 
-                        <span style="color: rgba(255, 255, 255, 0.9);">${item.cnpj}</span><br>
-                        <small style="color: rgba(255, 255, 255, 0.7);">
-                            ${new Date(item.timestamp).toLocaleString()}
-                        </small>
-                    </div>
-                    <button onclick="recuperarConsulta(${index})" 
-                            style="background: var(--success-gradient); border: none; border-radius: 8px; 
-                                   padding: 8px 16px; color: white; cursor: pointer; font-size: 12px;">
-                        Recuperar
-                    </button>
-                `;
-                container.appendChild(historyItem);
-            });
-        }
-
-        window.recuperarConsulta = function (index) {
-            const consulta = historicoConsultas[index];
-            exibirResultado(consulta.data);
-            showToast('Consulta recuperada do histórico');
-            document.getElementById('historico-container').classList.remove('show');
-        };
-
-        function exportarHistorico() {
-            if (historicoConsultas.length === 0) {
-                showToast('Nenhum histórico para exportar', 'error');
-                return;
-            }
-
-            let historicoTexto = 'Histórico de Consultas CNPJ\n\n';
-
-            historicoConsultas.forEach((item, index) => {
-                historicoTexto += `Consulta ${index + 1}:\n`;
-                historicoTexto += `CNPJ: ${item.cnpj}\n`;
-                historicoTexto += `Data e Hora: ${new Date(item.timestamp).toLocaleString()}\n`;
-                historicoTexto += `Dados:\n${JSON.stringify(item.data, null, 2)}\n\n`;
-            });
-
-            const blob = new Blob([historicoTexto], {
-                type: 'text/plain;charset=utf-8;'
-            });
-            const link = document.createElement('a');
-            const now = new Date();
-            const dateTimeString = now.toLocaleString().replace(/[\s,]/g, '_').replace(/[:]/g, '-');
-            const fileName = `historico_consultas_${dateTimeString}.txt`;
-
-            if (navigator.msSaveBlob) {
-                navigator.msSaveBlob(blob, fileName);
-            } else {
-                const url = URL.createObjectURL(blob);
-                link.href = url;
-                link.download = fileName;
-                link.click();
-                URL.revokeObjectURL(url);
-            }
-            
-            showToast('Histórico exportado com sucesso!');
-        }
-
-        function validarCNPJ(cnpj) {
-            cnpj = cnpj.replace(/[^\d]+/g, '');
-            if (cnpj == '') return false;
-            if (cnpj.length != 14) return false;
-
-            // Elimina CNPJs inválidos conhecidos
-            if (cnpj == "00000000000000" ||
-                cnpj == "11111111111111" ||
-                cnpj == "22222222222222" ||
-                cnpj == "33333333333333" ||
-                cnpj == "44444444444444" ||
-                cnpj == "55555555555555" ||
-                cnpj == "66666666666666" ||
-                cnpj == "77777777777777" ||
-                cnpj == "88888888888888" ||
-                cnpj == "99999999999999")
-                return false;
-
-            // Valida DVs
-            let tamanho = cnpj.length - 2;
-            let numeros = cnpj.substring(0, tamanho);
-            let digitos = cnpj.substring(tamanho);
-            let soma = 0;
-            let pos = tamanho - 7;
-            for (let i = tamanho; i >= 1; i--) {
-                soma += numeros.charAt(tamanho - i) * pos--;
-                if (pos < 2) pos = 9;
-            }
-            let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-            if (resultado != digitos.charAt(0)) return false;
-
-            tamanho = tamanho + 1;
-            numeros = cnpj.substring(0, tamanho);
-            soma = 0;
-            pos = tamanho - 7;
-            for (let i = tamanho; i >= 1; i--) {
-                soma += numeros.charAt(tamanho - i) * pos--;
-                if (pos < 2) pos = 9;
-            }
-            resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-            if (resultado != digitos.charAt(1)) return false;
-
-            return true;
-        }
-
-        // Event listeners for action buttons
-        document.getElementById('mostrar-json-btn').addEventListener('click', function () {
-            const section = document.getElementById('json-bruto');
-            section.classList.toggle('show');
-        });
-
-        document.getElementById('mostrar-dados-completos-btn').addEventListener('click', function () {
-            const section = document.getElementById('dados-completos');
-            section.classList.toggle('show');
-        });
-
-        document.getElementById('historico-btn').addEventListener('click', function () {
-            const section = document.getElementById('historico-container');
-            section.classList.toggle('show');
-            if (section.classList.contains('show')) {
-                exibirHistorico();
-            }
-        });
-
-        document.getElementById('exportar-historico-btn').addEventListener('click', function () {
-            exportarHistorico();
-        });
-
-        document.getElementById('limpar-historico-btn').addEventListener('click', function () {
-            if (confirm('Tem certeza que deseja limpar o histórico?')) {
-                localStorage.removeItem('historicoConsultas');
-                historicoConsultas.length = 0;
-                document.getElementById('historico-list').innerHTML = '';
-                document.getElementById('limpar-historico-btn').classList.remove('show');
-                showToast('Histórico limpo com sucesso!');
-            }
-        });
-
-        // Load history on page load
-        if (historicoConsultas.length > 0) {
-            exibirHistorico();
+            const debouncedSearch = debounce(fetchEnderecoFromAPIs, 300);
+            debouncedSearch(cep);
         }
     </script>
 </body>
